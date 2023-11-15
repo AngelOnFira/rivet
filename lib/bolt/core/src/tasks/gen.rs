@@ -23,7 +23,12 @@ pub async fn generate_project(ctx: &ProjectContext) {
 	}
 
 	// Generate K8S configs
-	dep::k8s::gen::project(ctx).await.unwrap();
+	match dep::k8s::gen::project(ctx).await {
+		Ok(a) => {}
+		Err(a) => {
+			dbg!(a);
+		}
+	};
 
 	// Generate additional roots
 	let additional_roots = &ctx.config_local().additional_roots;

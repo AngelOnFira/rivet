@@ -438,6 +438,10 @@ async fn gen_s3_provider(
 	let config = ctx.s3_config(provider).await?;
 	let creds = ctx.s3_credentials(provider).await?;
 
+	println!("{:?}", provider_name);
+	println!("{:?}", &config);
+	println!("{:?}", &creds);
+
 	// Build plugin chain
 	let plugins = format!("@plugin=tslua.so @pparam=/etc/trafficserver/strip_headers.lua @plugin=s3_auth.so @pparam=--config @pparam=s3_auth_v4_{provider_name}.config");
 
@@ -447,6 +451,12 @@ async fn gen_s3_provider(
 		endpoint_external = config.endpoint_external
 	));
 
+	// remap.push_str(&format!(
+	// 	"map /s3-cache/{provider_name} {endpoint_internal} {plugins}\n",
+	// 	endpoint_internal = config.endpoint_internal
+	// ));
+
+
 	// Add default route
 	if default_s3_provider == provider {
 		remap.push_str(&format!(
@@ -454,6 +464,13 @@ async fn gen_s3_provider(
 			endpoint_external = config.endpoint_external,
 		));
 	}
+
+	// if default_s3_provider == provider {
+	// 	remap.push_str(&format!(
+	// 		"map /s3-cache {endpoint_internal} {plugins}\n",
+	// 		endpoint_internal = config.endpoint_internal,
+	// 	));
+	// }
 
 	// Add credentials
 	let mut config_files = Vec::<(String, String)>::new();
@@ -481,6 +498,9 @@ async fn gen_s3_provider(
 			s3_region = config.region,
 		),
 	));
+
+	println!("{:?}", &config_files);
+	println!("{:?}", &remap);
 
 	Ok(GenRemapS3ProviderOutput {
 		append_remap: remap,

@@ -29,6 +29,7 @@
 -   Debian 11 (other Linux distros untested)
     -   Accessible from public IP
     -   Recommended: [Firewalls](/docs/getting_started/DEVELOPMENT_FIREWALLS.md)
+-   [SendGrid account](/docs/libraries/bolt/config/SENDGRID.md)
 -   [Cloudflare website](https://developers.cloudflare.com/fundamentals/get-started/setup/add-site/) (free)
 -   [Linode account](https://login.linode.com/signup) (more providers coming soon)
 

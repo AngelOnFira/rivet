@@ -663,11 +663,13 @@ impl ProjectContextData {
 	}
 }
 
+#[derive(Debug)]
 pub struct S3Credentials {
 	pub access_key_id: String,
 	pub access_key_secret: String,
 }
 
+#[derive(Debug)]
 pub struct S3Config {
 	pub endpoint_internal: String,
 	pub endpoint_external: String,

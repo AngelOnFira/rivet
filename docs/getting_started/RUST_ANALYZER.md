@@ -15,6 +15,8 @@ sudo apt install -y libssl-dev pkg-config protobuf-compiler
 rustup update
 ```
 
+Note: Make sure to not include `--no-install-recommends`, otherwise not everything will be installed.
+
 Reload VS Code (or restart the language server).
 
 ## Vim & Emacs
