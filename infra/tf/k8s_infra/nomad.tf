@@ -9,7 +9,7 @@
 # the servers would resolve the IP address from the DNS record and store that. When moving the server to a new pod's IP, the server
 # would fail to connect to the other servers because their IP changed.
 #
-# We don't use Consul for Nomad server service discvoery because (a) we'd have to _also_ run a Consul cluster which is unnecesarily
+# We don't use Consul for Nomad server service discovery because (a) we'd have to _also_ run a Consul cluster which is unnecesarily
 # complicated + adds another point of failure and (b) it doesn't fix the problem with Nomad server addresses changing.
 
 locals {

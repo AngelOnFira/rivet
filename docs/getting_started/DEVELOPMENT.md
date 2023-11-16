@@ -84,7 +84,11 @@ Run this command any time you update to a new version of Rivet.
 
 > **Tip**
 >
-> See the `namespaces/dev.toml` and `secrets/dev.toml` file to see the generated namespace configs.
+> See the `namespaces/dev.toml` and `secrets/dev.toml` file to see the generated
+> namespace configs.
+>
+> If you are working on a machine without ports forwarded for a public IP, then
+> change `cluster.single_node.public_ip` to `127.0.0.1`.
 
 ## Step 4: Boot the Rivet Hub
 
