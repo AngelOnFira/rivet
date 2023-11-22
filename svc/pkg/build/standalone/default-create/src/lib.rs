@@ -131,32 +131,60 @@ async fn upload_build(
 	ctx: &OperationContext<()>,
 	build: &DefaultBuildConfig,
 ) -> GlobalResult<Uuid> {
+	tracing::info!("1");
+	// Add a lot of garbage data to the tar file
+	// let mut build_tar = Vec::new();
+	// for i in 0..1000000 {
+	// 	build_tar.extend_from_slice(format!("{}\n", i).as_bytes());
+	// }
+	// let build = DefaultBuildConfig {
+	// 	tar: build_tar.as_slice(),
+	// 	..*build
+	// };
+
+	let file_size = build.tar.len() as u64;
+
+	// Create a sample file with random data
+	let mut build_tar = Vec::new();
+	for i in 0..10_000_000 {
+		build_tar.extend_from_slice(format!("{}\n", i).as_bytes());
+	}
+	let file_size = build_tar.len() as u64;
+
+	// Print the files contents
+	tracing::info!(?build.tar, "file contents");
+
 	let upload_prepare_res = op!([ctx] upload_prepare {
 		bucket: "bucket-build".into(),
 		files: vec![
 			backend::upload::PrepareFile {
 				path: "image.tar".into(),
-				content_length: build.tar.len() as u64,
-				multipart: true,
+				content_length: file_size,
+				multipart: true,//file_size > util::file_size::mebibytes(5), // set to false if file size is less than 5MiB
 				..Default::default()
 			},
 		],
 	})
 	.await?;
+	tracing::info!("2");
 	let upload_id = unwrap_ref!(upload_prepare_res.upload_id).as_uuid();
+	tracing::info!("3");
 
 	for req in &upload_prepare_res.presigned_requests {
+		tracing::info!(?req, "uploading part");
 		let start = req.byte_offset as usize;
 		let end = (req.byte_offset + req.content_length) as usize;
 
-		let part = &build.tar[start..end];
+		let part = &build_tar[start..end];
 
 		let url = &req.url;
+		// Override the host to use minio.minio.svc.cluster.local instead of 127.0.0.1
+		let url = url.replace("127.0.0.1", "minio.minio.svc.cluster.local");
 		tracing::info!(%url, part=%req.part_number, "uploading file");
 		let res = reqwest::Client::new()
 			.put(url)
 			.header(reqwest::header::CONTENT_LENGTH, part.len() as u64)
-			.body(reqwest::Body::from(part))
+			.body(reqwest::Body::from(part.to_owned()))
 			.send()
 			.await?;
 

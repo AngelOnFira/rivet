@@ -246,10 +246,23 @@ async fn handle_upload(
 			)
 			.await?;
 
+		// Debug the uri
+		tracing::info!(?presigned_upload_req, "signed upload request");
+		tracing::info!(
+			"{}",
+			presigned_upload_req
+				.uri()
+				.to_string()
+				.replace("127.0.0.1", "minio.minio.svc.cluster.local")
+		);
+
 		GlobalResult::Ok(backend::upload::PresignedUploadRequest {
 			path: file.path.clone(),
-			url: presigned_upload_req.uri().to_string(),
-			part_number: 0,
+			url: presigned_upload_req
+				.uri()
+				.to_string()
+				.replace("127.0.0.1", "minio.minio.svc.cluster.local"),
+			part_number: 1,
 			byte_offset: 0,
 			content_length: file.content_length,
 		})
@@ -269,11 +282,11 @@ async fn handle_multipart_upload(
 ) -> GlobalResult<Vec<PrepareResult>> {
 	// NOTE: https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html. See error
 	// code `EntityTooSmall`
-	ensure_with!(
-		file.content_length >= util::file_size::mebibytes(5),
-		UPLOAD_INVALID,
-		reason = "upload too small for multipart (< 5MiB)"
-	);
+	// ensure_with!(
+	// 	file.content_length >= util::file_size::mebibytes(5),
+	// 	UPLOAD_INVALID,
+	// 	reason = "upload too small for multipart (< 5MiB)"
+	// );
 
 	// Create multipart upload
 	let mut multipart_builder = s3_client
@@ -321,7 +334,10 @@ async fn handle_multipart_upload(
 
 				GlobalResult::Ok(backend::upload::PresignedUploadRequest {
 					path: file.path.clone(),
-					url: presigned_upload_req.uri().to_string(),
+					url: presigned_upload_req
+						.uri()
+						.to_string()
+						.replace("127.0.0.1", "minio.minio.svc.cluster.local"),
 					part_number: part_number as u32,
 					byte_offset: offset,
 					content_length,

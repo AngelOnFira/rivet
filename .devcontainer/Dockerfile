@@ -14,7 +14,7 @@
 # # set up. (For now it's --help since --version isn't on main)
 # RUN nix-shell --run "bolt --help"
 
-FROM mcr.microsoft.com/devcontainers/base:bullseye
+FROM mcr.microsoft.com/vscode/devcontainers/base:debian-12
 
 RUN apt-get update \
     && export DEBIAN_FRONTEND=noninteractive \

@@ -25,7 +25,8 @@
 		"vscode": {
 			"extensions": [
 				"rust-lang.rust-analyzer",
-				"hashicorp.terraform"
+				"hashicorp.terraform",
+				"eamodio.gitlens"
 			]
 		}
 	}

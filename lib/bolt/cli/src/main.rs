@@ -16,7 +16,7 @@ struct Opts {
 enum SubCommand {
 	/// Generates configs & creates infrastructure for a namespace.
 	///
-	/// Can we ran multiple times.
+	/// Can be ran multiple times.
 	Init(init::InitOpts),
 	/// Manages Rivet cluster configuration files
 	Config {

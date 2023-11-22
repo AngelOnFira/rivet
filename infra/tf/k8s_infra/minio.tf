@@ -56,6 +56,10 @@ resource "helm_release" "minio" {
 			}
 		} : null
 
+		  env = {
+    MINIO_SERVER_DEBUG = "on"
+  }
+
 		auth = {
 			rootUser = module.minio_secrets[0].values["s3/minio/root/key_id"]
 			rootPassword = module.minio_secrets[0].values["s3/minio/root/key"]

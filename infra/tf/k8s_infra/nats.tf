@@ -28,9 +28,9 @@ resource "helm_release" "nats" {
 	name = "nats"
 	namespace = kubernetes_namespace.nats.metadata.0.name
 	repository = "https://nats-io.github.io/k8s/helm/charts/"
-	chart = "nats"
-	version = "1.0.0"
-	values = [yamlencode({
+	chart      = "nats"
+	version    = "1.0.0"
+	values     = [yamlencode({
 		config = {
 			cluster = {
 				replicas = local.service_nats.count
@@ -43,13 +43,12 @@ resource "helm_release" "nats" {
 		}
 		container = {
 			env = {
-				# See https://artifacthub.io/packages/helm/grafana/grafana#nats-container-resources
 				GOMEMLIMIT = "${floor(local.service_nats.resources.memory * 0.9)}MiB"
 			}
 			merge = {
 				resources = var.limit_resources ? {
 					limits = {
-						cpu = "${local.service_nats.resources.cpu}m"
+						cpu    = "${local.service_nats.resources.cpu}m"
 						memory = "${local.service_nats.resources.memory}Mi"
 					}
 				} : null
@@ -57,6 +56,9 @@ resource "helm_release" "nats" {
 		}
 		promExporter = {
 			enabled = true
+		}
+		logging = {
+			debug = true
 		}
 	})]
 }
