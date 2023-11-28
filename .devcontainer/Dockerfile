@@ -27,14 +27,7 @@ RUN apt-get update \
         protobuf-compiler
 
 # Install Rust
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-
-# Install k9s https://github.com/derailed/k9s/releases/download/v0.28.2/k9s_Linux_amd64.tar.gz
-# Download, extract and move k9s to /usr/local/bin
-RUN curl -LO https://github.com/derailed/k9s/releases/download/v0.28.2/k9s_Linux_amd64.tar.gz \
-    && tar -xzf k9s_Linux_amd64.tar.gz \
-    && mv k9s /usr/local/bin/ \
-    && rm k9s_Linux_amd64.tar.gz
+# RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
 # # Create the nixbld group and add vscode user to it
 # RUN groupadd -r nixbld && usermod -a -G nixbld vscode

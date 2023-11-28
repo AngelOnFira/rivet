@@ -51,3 +51,6 @@ tests/basic-game/.env
 
 # Local SDKs
 sdks/
+
+# Kubectl
+kubeconfig.yaml

@@ -3,7 +3,7 @@ use hyper::{
 	service::{make_service_fn, service_fn},
 	Body, Request, Response,
 };
-use std::{convert::Infallible, net::SocketAddr, sync::Arc};
+use std::{convert::Infallible, net::{SocketAddr, TcpListener}, sync::Arc};
 
 #[derive(Clone, Default)]
 pub struct Config {
@@ -37,6 +37,16 @@ pub async fn run_standalone(config: Config) {
 	let server = Server::bind(&addr).serve(make_service);
 	if let Err(e) = server.await {
 		eprintln!("server error: {}", e);
+	}
+
+	// Check if port 8000 and 8001 are available
+	for port in [8000, 8001].iter() {
+		match TcpListener::bind(("localhost", *port)) {
+			Ok(_) => tracing::info!(port, "aport available"),
+			Err(err) => {
+				tracing::error!(port, %err, "aport unavailable");
+			}
+		}
 	}
 }
 

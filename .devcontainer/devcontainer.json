@@ -19,7 +19,9 @@
 		"ghcr.io/devcontainers/features/rust:1": {
 			"version": "latest",
 			"profile": "default"
-		}
+		},
+		"ghcr.io/devcontainers-contrib/features/kubectl-asdf:2": {},
+		"ghcr.io/audacioustux/devcontainers/k9s:1": {}
 	},
 	"customizations": {
 		"vscode": {

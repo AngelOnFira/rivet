@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::net::{SocketAddr, TcpListener};
 
 use hyper::{
 	header::CONTENT_TYPE,
@@ -22,6 +22,16 @@ pub async fn run_standalone() {
 	}));
 	if let Err(err) = server.await {
 		tracing::error!(?err, "server error");
+	}
+
+	// Check if port 8000 and 8001 are available
+	for port in [8000, 8001].iter() {
+		match TcpListener::bind(("localhost", *port)) {
+			Ok(_) => tracing::info!(port, "bport available"),
+			Err(err) => {
+				tracing::error!(port, %err, "bport unavailable");
+			}
+		}
 	}
 }
 

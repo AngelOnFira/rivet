@@ -302,9 +302,14 @@ where
 {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("OperationContext")
+			.field("name", &self.name)
+			.field("timeout", &self.timeout)
 			.field("req_id", &self.req_id)
 			.field("ray_id", &self.ray_id)
 			.field("ts", &self.ts)
+			.field("req_ts", &self.req_ts)
+			.field("body", &self.body)
+			.field("trace", &self.trace)
 			.finish()
 	}
 }

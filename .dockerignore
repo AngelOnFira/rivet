@@ -42,3 +42,6 @@ Bolt.local.toml
 **/dist/
 **/node_modules/
 ptato.sh
+
+# Kubectl
+kubeconfig.yaml
