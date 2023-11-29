@@ -21,7 +21,8 @@
 			"profile": "default"
 		},
 		"ghcr.io/devcontainers-contrib/features/kubectl-asdf:2": {},
-		"ghcr.io/audacioustux/devcontainers/k9s:1": {}
+		"ghcr.io/audacioustux/devcontainers/k9s:1": {},
+		"ghcr.io/devcontainers/features/node:1": {}
 	},
 	"customizations": {
 		"vscode": {
@@ -31,5 +32,6 @@
 				"eamodio.gitlens"
 			]
 		}
-	}
+	},
+	"postCreateCommand": ".devcontainer/post-create.sh"
 }
