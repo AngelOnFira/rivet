@@ -85,12 +85,12 @@ pub use err_code;
 /// ```
 #[macro_export]
 macro_rules! bail {
-	($msg:expr) => {{
+	($msg:expr) => {
 		return Err(Into::into($crate::ext::AssertionError::Panic {
-			message: $msg,
+			message: Into::<String>::into($msg),
 			location: $crate::location!(),
 		}));
-	}};
+	};
 }
 pub use bail;
 
@@ -212,21 +212,105 @@ macro_rules! unwrap_ref {
 }
 pub use unwrap_ref;
 
+/// `AssertionErrorUnwrap` is a trait used for handling unwrapping of `Result`
+/// and `Option` types.
+///
+/// This trait provides a method `assertion_error_unwrap` that takes a `Result`
+/// or `Option` and returns a `Result`. If the original `Result` or `Option` is
+/// `Ok` or `Some`, it returns `Ok` with the unwrapped value. If it's `Err` or
+/// `None`, it returns `Err` with an `AssertionError::Unwrap` that includes a
+/// message and location.
+pub trait AssertionErrorUnwrap {
+	type WrappedType;
+
+	fn assertion_error_unwrap(
+		self,
+		message: String,
+	) -> Result<Self::WrappedType, crate::ext::AssertionError>;
+}
+
+impl<T, E: core::fmt::Debug> AssertionErrorUnwrap for Result<T, E> {
+	type WrappedType = T;
+
+	fn assertion_error_unwrap(self, message: String) -> Result<T, crate::ext::AssertionError> {
+		match self {
+			Ok(t) => Ok(t),
+			Err(e) => Err(crate::ext::AssertionError::Unwrap {
+				message: format!("{}: {:?}", message, e),
+				location: crate::location!(),
+			}),
+		}
+	}
+}
+
+impl<T> AssertionErrorUnwrap for Option<T> {
+	type WrappedType = T;
+
+	fn assertion_error_unwrap(self, message: String) -> Result<T, crate::ext::AssertionError> {
+		match self {
+			Some(t) => Ok(t),
+			None => Err(Into::into(crate::ext::AssertionError::Unwrap {
+				message,
+				location: crate::location!(),
+			})),
+		}
+	}
+}
+
+// TODO(forest): Can we handle this type with a blanket impl?
+impl<'a, T> AssertionErrorUnwrap for &'a Option<T> {
+	type WrappedType = &'a T;
+
+	fn assertion_error_unwrap(self, message: String) -> Result<&'a T, crate::ext::AssertionError> {
+		match self {
+			Some(t) => Ok(t),
+			None => Err(Into::into(crate::ext::AssertionError::Unwrap {
+				message,
+				location: crate::location!(),
+			})),
+		}
+	}
+}
+
+// TODO(forest): Can we handle this type with a blanket impl?
+impl<'a, T> AssertionErrorUnwrap for &'a &'a Option<T> {
+	type WrappedType = &'a T;
+
+	fn assertion_error_unwrap(self, message: String) -> Result<&'a T, crate::ext::AssertionError> {
+		match self {
+			Some(t) => Ok(t),
+			None => Err(Into::into(crate::ext::AssertionError::Unwrap {
+				message,
+				location: crate::location!(),
+			})),
+		}
+	}
+}
+
+/// Unwraps an `Option` and returns the contained value or exits early with an
+/// error.
+///
+/// # Examples
+///
+/// ```
+/// let value = unwrap!(option, "Value must exist");
+/// ```
+///
+/// With a default message:
+///
+/// ```
+/// let value = unwrap!(option);
+/// ```
 #[macro_export]
 macro_rules! unwrap {
 	($expr:expr, $msg:expr) => {{
-		#[allow(match_result_ok)]
-		if let Some(val) = $expr {
-			val
-		} else {
-			return Err(Into::into($crate::ext::AssertionError::Unwrap {
-				message: $msg,
-				location: $crate::location!(),
-			}));
+		match AssertionErrorUnwrap::assertion_error_unwrap($expr, Into::<String>::into($msg)) {
+			Ok(val) => val,
+			Err(err) => return Err(err.into()),
 		}
 	}};
 	($expr:expr $(,)?) => {{
-		$crate::unwrap!($expr, "attempt to unwrap null value")
+		$crate::unwrap!($expr, "attempt to unwrap null value".to_string())
 	}};
 }
 pub use unwrap;

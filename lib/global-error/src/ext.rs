@@ -4,7 +4,7 @@ use crate::Location;
 pub enum AssertionError {
 	#[error("{location} panic: {message}")]
 	Panic {
-		message: &'static str,
+		message: String,
 		location: Location,
 	},
 
@@ -25,7 +25,7 @@ pub enum AssertionError {
 
 	#[error("{location} unwrap: {message}")]
 	Unwrap {
-		message: &'static str,
+		message: String,
 		location: Location,
 	},
 }
