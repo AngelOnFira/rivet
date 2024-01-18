@@ -8,7 +8,7 @@ use serde_json::json;
 async fn handle(
 	ctx: OperationContext<mm::lobby_find_fail::Request>,
 ) -> GlobalResult<mm::lobby_find_fail::Response> {
-	let crdb = ctx.crdb().await?;
+	let _crdb = ctx.crdb().await?;
 	let redis = ctx.redis_mm().await?;
 
 	// Complete all queries in parallel
@@ -98,6 +98,7 @@ async fn publish_fail_event(
 	msg!([ctx] analytics::msg::event_create() {
 		events: vec![
 			analytics::msg::event_create::Event {
+				event_id: Some(Uuid::new_v4().into()),
 				name: "mm.query.fail".into(),
 				properties_json: Some(serde_json::to_string(&json!({
 					"namespace_id": namespace_id,

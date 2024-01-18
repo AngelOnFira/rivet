@@ -29,7 +29,7 @@ struct MultipartUpdate {
 async fn handle(
 	ctx: OperationContext<upload::prepare::Request>,
 ) -> GlobalResult<upload::prepare::Response> {
-	let crdb = ctx.crdb().await?;
+	let _crdb = ctx.crdb().await?;
 	let provider = if let Some(provider) = ctx.provider {
 		let proto_provider = unwrap!(
 			backend::upload::Provider::from_i32(provider),
@@ -202,6 +202,7 @@ async fn handle(
 	msg!([ctx] analytics::msg::event_create() {
 		events: vec![
 			analytics::msg::event_create::Event {
+				event_id: Some(Uuid::new_v4().into()),
 				name: "upload.prepare".into(),
 				properties_json: Some(serde_json::to_string(&json!({
 					"user_id": user_id,

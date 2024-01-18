@@ -1,4 +1,4 @@
-use proto::backend::{self, pkg::*};
+use proto::backend::pkg::*;
 use rivet_operation::prelude::*;
 use serde_json::json;
 
@@ -35,25 +35,16 @@ async fn handle(
 
 	// Check if team can create a game
 	{
-		let dev_team_res = op!([ctx] team_dev_get {
+		let team_res = op!([ctx] team_get {
 			team_ids: vec![developer_team_id_proto]
 		})
 		.await?;
-		let dev_team = unwrap_with!(dev_team_res.teams.first(), GROUP_NOT_DEVELOPER_GROUP);
-		let status = unwrap!(backend::team::dev_team::DevStatus::from_i32(
-			dev_team.status
-		));
-		ensure_with!(
-			matches!(status, backend::team::dev_team::DevStatus::Active),
-			GROUP_INVALID_DEVELOPER_STATUS
-		);
+		let team = unwrap!(team_res.teams.first());
+		ensure_with!(team.deactivate_reasons.is_empty(), GROUP_DEACTIVATED);
 	}
 
 	// TODO: Deprecate `url` and `description` columns
-	let crdb = ctx.crdb().await?;
 	let game_id = Uuid::new_v4();
-	let plan_code = "free";
-	let subscription_id = Uuid::new_v4();
 	sql_execute!(
 		[ctx]
 		"
@@ -64,11 +55,9 @@ async fn handle(
 			display_name,
 			url,
 			description,
-			developer_team_id,
-			plan_code,
-			subscription_id
+			developer_team_id
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		",
 		game_id,
 		ctx.ts(),
@@ -77,16 +66,18 @@ async fn handle(
 		"",
 		"",
 		developer_team_id,
-		plan_code,
-		subscription_id,
 	)
 	.await?;
 
-	// TODO: Add stripe subscription for game
+	msg!([ctx] game::msg::create_complete(game_id) {
+		game_id: Some(game_id.into()),
+	})
+	.await?;
 
 	msg!([ctx] analytics::msg::event_create() {
 		events: vec![
 			analytics::msg::event_create::Event {
+				event_id: Some(Uuid::new_v4().into()),
 				name: "game.create".into(),
 				properties_json: Some(serde_json::to_string(&json!({
 					"developer_team_id": developer_team_id,

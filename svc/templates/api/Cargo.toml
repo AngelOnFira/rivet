@@ -2,7 +2,7 @@
 name = "api-{{name}}"
 version = "0.0.1"
 authors = ["Rivet Gaming, LLC <developer@rivet.gg>"]
-edition = "2018"
+edition = "2021"
 license = "Apache-2.0"
 
 [dependencies]
@@ -12,7 +12,7 @@ rivet-operation = { path = "../../../lib/operation/core" }
 chrono = "0.4"
 http = "0.2"
 hyper = { version = "0.14", features = ["server", "http1", "stream", "tcp"] }
-rivet-api = { path = "../../../gen/openapi/internal/rust" }
+rivet-api = { path = "../../../sdks/rust" }
 rivet-cache = { path = "../../../lib/cache/build" }
 rivet-claims = { path = "../../../lib/claims" }
 rivet-health-checks = { path = "../../../lib/health-checks" }

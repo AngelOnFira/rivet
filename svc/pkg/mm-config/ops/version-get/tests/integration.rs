@@ -1,5 +1,5 @@
 use chirp_worker::prelude::*;
-use proto::backend::{self, pkg::*};
+use proto::backend::{self};
 
 use std::collections::HashSet;
 
@@ -23,7 +23,7 @@ impl TestVersion {
 
 		let build_res = op!([ctx] faker_build {
 			game_id: game_res.game_id,
-			image: faker::build::Image::MmLobbyAutoReady as i32,
+			image: backend::faker::Image::MmLobbyAutoReady as i32,
 		})
 		.await
 		.unwrap();
@@ -201,7 +201,7 @@ async fn multiple(ctx: TestCtx) {
 			"wrong version count"
 		);
 
-		// Validate lobby gropu names
+		// Validate lobby group names
 		let actual_lobby_group_names = lobby_group_names
 			.iter()
 			.map(|x| x.to_string())

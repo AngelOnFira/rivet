@@ -9,8 +9,6 @@ imports:
 
 service:
   auth: true
-  audiences:
-    - public
   base-path: /identity/identities
   endpoints:
     setup:
@@ -37,8 +35,6 @@ service:
         `Setup` every time the client starts.
       path: ""
       method: POST
-      audiences:
-        - public
       request:
         name: SetupRequest
         body:
@@ -324,7 +320,7 @@ types:
       identity_token_expire_ts:
         type: datetime
         docs: |
-          If this token is comprimised, anyone with access to this token has control of the identity.
+          If this token is compromised, anyone with access to this token has control of the identity.
       identity:
         type: identityCommons.Profile
         docs: |

@@ -1,6 +1,6 @@
 use api_helper::ctx::Ctx;
-use proto::{backend, common};
-use rivet_api::models;
+use proto::common;
+
 use rivet_operation::prelude::*;
 
 use crate::auth::Auth;
@@ -43,7 +43,7 @@ pub async fn resolve_user_with_game_user_id(
 		game_user_ids: vec![game_user_id.into()]
 	})
 	.await?;
-	let Some(game_user) = game_user_res.game_users.first().clone() else {
+	let Some(game_user) = game_user_res.game_users.first() else {
 		return Ok(None);
 	};
 

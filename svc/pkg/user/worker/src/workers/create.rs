@@ -53,9 +53,9 @@ async fn worker(ctx: &OperationContext<user::msg::create::Message>) -> GlobalRes
 	};
 
 	// Attempt to create a unique handle 3 times
-	let crdb = ctx.crdb().await?;
+	let _crdb = ctx.crdb().await?;
 	let mut attempts = 3u32;
-	let (display_name, account_number) = loop {
+	let (_display_name, _account_number) = loop {
 		if attempts == 0 {
 			bail!("failed all attempts to create unique user handle");
 		}
@@ -84,6 +84,7 @@ async fn worker(ctx: &OperationContext<user::msg::create::Message>) -> GlobalRes
 	msg!([ctx] analytics::msg::event_create() {
 		events: vec![
 			analytics::msg::event_create::Event {
+				event_id: Some(Uuid::new_v4().into()),
 				name: "user.create".into(),
 				user_id: Some(user_id.into()),
 				namespace_id: ctx.namespace_id,
@@ -92,6 +93,7 @@ async fn worker(ctx: &OperationContext<user::msg::create::Message>) -> GlobalRes
 				..Default::default()
 			},
 			analytics::msg::event_create::Event {
+				event_id: Some(Uuid::new_v4().into()),
 				name: "user.profile_set".into(),
 				user_id: Some(user_id.into()),
 				namespace_id: ctx.namespace_id,

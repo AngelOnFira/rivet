@@ -2,7 +2,7 @@
 name = "chirp-client"
 version = "0.1.0"
 authors = ["Rivet Gaming, LLC <developer@rivet.gg>"]
-edition = "2018"
+edition = "2021"
 license = "Apache-2.0"
 
 [dependencies]
@@ -10,7 +10,7 @@ chirp-perf = { path = "../perf" }
 chirp-types = { path = "../types" }
 chrono = "0.4"
 futures-util = "0.3"
-global-error = { path = "../../global-error" }
+global-error = { path = "../../global-error", features = ["chirp"] }
 lazy_static = "1.4"
 prost = "0.10"
 rand = "0.8"
@@ -27,8 +27,10 @@ urlencoding = "2.1"
 uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
-tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "ansi"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "fmt",
+    "ansi",
+] }
 
 testcontainers = "0.12"
 rivet-test-images = { path = "../../test-images" }
-

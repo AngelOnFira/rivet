@@ -2,7 +2,7 @@
 name = "api-portal"
 version = "0.0.1"
 authors = ["Rivet Gaming, LLC <developer@rivet.gg>"]
-edition = "2018"
+edition = "2021"
 license = "Apache-2.0"
 
 [dependencies]
@@ -28,13 +28,16 @@ serde_json = "1.0"
 thiserror = "1.0"
 tokio = { version = "1.29" }
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "json", "ansi"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "fmt",
+    "json",
+    "ansi",
+] }
 url = "2.2.2"
 uuid = { version = "1", features = ["v4"] }
 
 game-get = { path = "../../pkg/game/ops/get" }
 game-resolve-name-id = { path = "../../pkg/game/ops/resolve-name-id" }
-team-dev-get = { path = "../../pkg/team-dev/ops/get" }
 team-get = { path = "../../pkg/team/ops/get" }
 team-member-count = { path = "../../pkg/team/ops/member-count" }
 token-revoke = { path = "../../pkg/token/ops/revoke" }

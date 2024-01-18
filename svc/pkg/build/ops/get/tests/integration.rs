@@ -1,5 +1,5 @@
 use chirp_worker::prelude::*;
-use proto::backend::pkg::*;
+use proto::backend::{self};
 
 #[worker_test]
 async fn empty(ctx: TestCtx) {
@@ -11,13 +11,13 @@ async fn empty(ctx: TestCtx) {
 
 	let build_res = op!([ctx] faker_build {
 		game_id: game_res.game_id,
-		image: faker::build::Image::MmLobbyAutoReady as i32,
+		image: backend::faker::Image::MmLobbyAutoReady as i32,
 	})
 	.await
 	.unwrap();
 	let build_id = build_res.build_id.as_ref().unwrap().as_uuid();
 
-	let res = op!([ctx] build_get {
+	let _res = op!([ctx] build_get {
 		build_ids: vec![build_id.into()],
 	})
 	.await

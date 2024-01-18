@@ -45,6 +45,8 @@ pub struct Namespace {
 	pub rust: Rust,
 	#[serde(default)]
 	pub rivet: Rivet,
+	#[serde(default)]
+	pub better_uptime: Option<BetterUptime>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -546,6 +548,8 @@ pub struct Rivet {
 	pub dynamic_servers: DynamicServers,
 	#[serde(default)]
 	pub cdn: Cdn,
+	#[serde(default)]
+	pub billing: Option<RivetBilling>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -639,6 +643,12 @@ impl Default for Cdn {
 	}
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(deny_unknown_fields)]
+pub struct RivetBilling {
+	pub dynamic_servers_capacity_price_id: String,
+}
+
 fn default_regions() -> HashMap<String, Region> {
 	toml::from_str(include_str!("../default_regions.toml"))
 		.expect("failed to parse default_regions.toml")
@@ -662,4 +672,12 @@ fn default_minio_port() -> u16 {
 
 fn default_tunnel_port() -> u16 {
 	5000
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(deny_unknown_fields)]
+pub struct BetterUptime {
+	pub company_name: String,
+	pub company_url: String,
+	pub company_subdomain: String,
 }

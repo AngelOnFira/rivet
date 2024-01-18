@@ -1,10 +1,8 @@
 use chirp_worker::prelude::*;
 use proto::backend::{
 	self,
-	pkg::{
-		mm::{msg::lobby_find::message::Query, msg::lobby_find_fail::ErrorCode},
-		*,
-	},
+	matchmaker::lobby_find::ErrorCode,
+	pkg::{mm::msg::lobby_find::message::Query, *},
 };
 use serde_json::json;
 use tracing::Instrument;
@@ -95,14 +93,14 @@ async fn worker(ctx: &OperationContext<mm::msg::lobby_find::Message>) -> GlobalR
 		return complete_request(ctx.chirp(), analytics_events).await;
 	}
 
-	let ((_namespace, mm_ns_config, dev_team), lobby_group_config) = tokio::try_join!(
+	let ((_namespace, mm_ns_config, team), lobby_group_config) = tokio::try_join!(
 		// Namespace and dev team
-		fetch_ns_config_and_dev_team(ctx.base(), namespace_id),
+		fetch_ns_config_and_team(ctx.base(), namespace_id),
 		fetch_lobby_group_config(ctx.base(), query),
 	)?;
 
 	// Verify dev team status
-	if !dev_team.active {
+	if !team.deactivate_reasons.is_empty() {
 		fail(
 			ctx,
 			namespace_id,
@@ -132,6 +130,7 @@ async fn worker(ctx: &OperationContext<mm::msg::lobby_find::Message>) -> GlobalR
 	msg!([ctx] analytics::msg::event_create() {
 		events: vec![
 			analytics::msg::event_create::Event {
+				event_id: Some(Uuid::new_v4().into()),
 				name: "mm.find.create".into(),
 				properties_json: Some(serde_json::to_string(&json!({
 					"namespace_id": namespace_id,
@@ -249,6 +248,7 @@ async fn worker(ctx: &OperationContext<mm::msg::lobby_find::Message>) -> GlobalR
 
 	// Record analytics events
 	analytics_events.push(analytics::msg::event_create::Event {
+		event_id: Some(Uuid::new_v4().into()),
 		name: "mm.query.create".into(),
 		properties_json: Some(serde_json::to_string(&json!({
 			"namespace_id": namespace_id,
@@ -262,6 +262,7 @@ async fn worker(ctx: &OperationContext<mm::msg::lobby_find::Message>) -> GlobalR
 	});
 	for player in &players {
 		analytics_events.push(analytics::msg::event_create::Event {
+			event_id: Some(Uuid::new_v4().into()),
 			name: "mm.player.create".into(),
 			properties_json: Some(serde_json::to_string(&json!({
 				"namespace_id": namespace_id,
@@ -406,15 +407,15 @@ async fn worker(ctx: &OperationContext<mm::msg::lobby_find::Message>) -> GlobalR
 }
 
 #[tracing::instrument]
-async fn fetch_ns_config_and_dev_team(
+async fn fetch_ns_config_and_team(
 	ctx: OperationContext<()>,
 	namespace_id: Uuid,
 ) -> GlobalResult<(
 	backend::game::Namespace,
 	backend::matchmaker::NamespaceConfig,
-	backend::team::DevTeam,
+	backend::team::Team,
 )> {
-	let ((ns, dev_team), get_mm_res) = tokio::try_join!(
+	let ((ns, game), get_mm_res) = tokio::try_join!(
 		{
 			let ctx = ctx.base();
 
@@ -435,14 +436,14 @@ async fn fetch_ns_config_and_dev_team(
 				let game = unwrap!(game_get_res.games.first());
 				let team_id = unwrap!(game.developer_team_id);
 
-				// Dev team
-				let team_dev_get_res = op!([ctx] team_dev_get {
+				// Team
+				let team_get_res = op!([ctx] team_get {
 					team_ids: vec![team_id],
 				})
 				.await?;
-				let dev_team = unwrap!(team_dev_get_res.teams.first());
+				let team = unwrap!(team_get_res.teams.first());
 
-				Ok((namespace.clone(), dev_team.clone()))
+				Ok((namespace.clone(), team.clone()))
 			}
 		},
 		op!([ctx] mm_config_namespace_get {
@@ -453,7 +454,7 @@ async fn fetch_ns_config_and_dev_team(
 	let mm_config =
 		unwrap_ref!(unwrap!(get_mm_res.namespaces.first(), "mm namespace not found").config);
 
-	Ok((ns, mm_config.clone(), dev_team))
+	Ok((ns, mm_config.clone(), game))
 }
 
 #[derive(Debug, Clone)]

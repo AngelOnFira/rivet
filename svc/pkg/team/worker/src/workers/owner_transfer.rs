@@ -1,6 +1,5 @@
 use chirp_worker::prelude::*;
-use proto::backend::{self, pkg::*};
-use serde_json::json;
+use proto::backend::pkg::*;
 
 #[worker(name = "team-owner-transfer")]
 async fn worker(ctx: &OperationContext<team::msg::owner_transfer::Message>) -> GlobalResult<()> {
@@ -36,13 +35,6 @@ async fn worker(ctx: &OperationContext<team::msg::owner_transfer::Message>) -> G
 			util::timestamp::now(),
 		),
 	)?;
-
-	let teams_res = op!([ctx] team_dev_get {
-		team_ids: vec![*raw_team_id],
-	})
-	.await?;
-
-	// TODO: Update stripe account email
 
 	msg!([ctx] team::msg::update(team_id) {
 		team_id: Some(team_id.into()),

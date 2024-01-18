@@ -16,6 +16,11 @@ locals {
 			service_namespace = kubernetes_namespace.vector.metadata[0].name
 			service_port = 6000
 		}
+		"vector-tcp-json" = {
+			service = "vector"
+			service_namespace = kubernetes_namespace.vector.metadata[0].name
+			service_port = 6100
+		}
 	}
 
 	service_traefik_tunnel = lookup(var.services, "traefik-tunnel", {
@@ -151,6 +156,12 @@ resource "kubernetes_service" "traefik_tunnel_headless" {
 			name = "tunnel"
 			port = 5000
 			target_port = "tunel"
+		}
+
+		port {
+			name = "traefik"
+			port = 9000
+			target_port = "traefik"
 		}
 
 		port {

@@ -4,7 +4,7 @@ use serde_json::json;
 
 #[worker(name = "team-invite-create")]
 async fn worker(ctx: &OperationContext<team_invite::msg::create::Message>) -> GlobalResult<()> {
-	let crdb = ctx.crdb().await?;
+	let _crdb = ctx.crdb().await?;
 
 	let team_id = unwrap_ref!(ctx.team_id).as_uuid();
 
@@ -36,6 +36,7 @@ async fn worker(ctx: &OperationContext<team_invite::msg::create::Message>) -> Gl
 	msg!([ctx] analytics::msg::event_create() {
 		events: vec![
 			analytics::msg::event_create::Event {
+				event_id: Some(Uuid::new_v4().into()),
 				name: "team.invite.create".into(),
 				properties_json: Some(serde_json::to_string(&json!({
 					"team_id": team_id,

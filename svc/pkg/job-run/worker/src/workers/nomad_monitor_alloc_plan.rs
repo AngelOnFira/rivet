@@ -54,7 +54,7 @@ async fn worker(
 	let job_id = unwrap_ref!(alloc.job_id, "alloc has no job id");
 	let alloc_id = unwrap_ref!(alloc.ID);
 	let nomad_node_id = unwrap_ref!(alloc.node_id, "alloc has no node id");
-	let nomad_node_name = unwrap_ref!(alloc.node_id, "alloc has no node name");
+	let _nomad_node_name = unwrap_ref!(alloc.node_id, "alloc has no node name");
 
 	if !util_job::is_nomad_job_run(job_id) {
 		tracing::info!(%job_id, "disregarding event");
@@ -64,7 +64,7 @@ async fn worker(
 	// Fetch node metadata
 	let node = nomad_client::apis::nodes_api::get_node(
 		&NOMAD_CONFIG,
-		&nomad_node_id,
+		nomad_node_id,
 		None,
 		None,
 		None,
@@ -223,7 +223,7 @@ async fn update_db(
 	}: RunData,
 ) -> GlobalResult<Option<DbOutput>> {
 	let run_row = sql_fetch_optional!(
-		[ctx, RunRow]
+		[ctx, RunRow, @tx tx]
 		"
 		SELECT runs.run_id, runs.region_id, run_meta_nomad.alloc_plan_ts
 		FROM db_job_state.run_meta_nomad
@@ -301,7 +301,7 @@ async fn update_db(
 
 	// Update the run ports
 	let proxied_ports = sql_fetch_all!(
-		[ctx, ProxiedPort]
+		[ctx, ProxiedPort, @tx tx]
 		"
 		SELECT target_nomad_port_label, ingress_port, ingress_hostnames, proxy_protocol, ssl_domain_mode
 		FROM db_job_state.run_proxied_ports

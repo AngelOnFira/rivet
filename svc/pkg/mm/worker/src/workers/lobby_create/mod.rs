@@ -260,6 +260,7 @@ async fn worker(ctx: &OperationContext<mm::msg::lobby_create::Message>) -> Globa
 	msg!([ctx] analytics::msg::event_create() {
 		events: vec![
 			analytics::msg::event_create::Event {
+				event_id: Some(Uuid::new_v4().into()),
 				name: "mm.lobby.create".into(),
 				namespace_id: ctx.namespace_id,
 				properties_json: Some(serde_json::to_string(&json!({
@@ -500,7 +501,7 @@ async fn update_db(
 	//
 	// This will lock the lobby for the duration of the transaction
 	let lobby_row = sql_fetch_optional!(
-		[ctx, (Option<i64>, Option<i64>)]
+		[ctx, (Option<i64>, Option<i64>), @tx tx]
 		"SELECT stop_ts, preemptive_create_ts FROM db_mm_state.lobbies WHERE lobby_id = $1 FOR UPDATE",
 		opts.lobby_id,
 	)
@@ -585,6 +586,8 @@ async fn create_docker_job(
 	let lobby_group_id = unwrap_ref!(lobby_group_meta.lobby_group_id).as_uuid();
 	let region_id = unwrap_ref!(region.region_id).as_uuid();
 
+	let job_runner_binary_url = resolve_job_runner_binary_url(ctx).await?;
+
 	let resolve_perf = ctx.perf().start("resolve-image-artifact-url").await;
 	let build_id = unwrap_ref!(runtime.build_id).as_uuid();
 	let image_artifact_url = resolve_image_artifact_url(ctx, build_id, region).await?;
@@ -643,7 +646,7 @@ async fn create_docker_job(
 				}
 			};
 
-			GlobalResult::Ok(job_run::msg::create::ProxiedPort {
+			GlobalResult::Ok(backend::job::ProxiedPortConfig {
 				// Match the port label generated in mm-config-version-prepare
 				// and in api-matchmaker
 				target_nomad_port_label: Some(util_mm::format_nomad_port_label(&port.label)),
@@ -665,6 +668,14 @@ async fn create_docker_job(
 		run_id: Some(run_id.into()),
 		region_id: Some(region_id.into()),
 		parameters: vec![
+			job_run::msg::create::Parameter {
+				key: "job_runner_binary_url".into(),
+				value: job_runner_binary_url,
+			},
+			job_run::msg::create::Parameter {
+				key: "vector_socket_addr".into(),
+				value: "127.0.0.1:5003".to_string(),
+			},
 			job_run::msg::create::Parameter {
 				key: "image_artifact_url".into(),
 				value: image_artifact_url.to_string(),
@@ -737,6 +748,37 @@ async fn create_docker_job(
 	.await?;
 
 	Ok(())
+}
+
+/// Generates a presigned URL for the job runner binary.
+#[tracing::instrument]
+async fn resolve_job_runner_binary_url(
+	ctx: &OperationContext<mm::msg::lobby_create::Message>,
+) -> GlobalResult<String> {
+	// Build client
+	let s3_client = s3_util::Client::from_env_opt(
+		"bucket-infra-artifacts",
+		s3_util::Provider::default()?,
+		s3_util::EndpointKind::External,
+	)
+	.await?;
+	let presigned_req = s3_client
+		.get_object()
+		.bucket(s3_client.bucket())
+		.key("job-runner/job-runner")
+		.presigned(
+			s3_util::aws_sdk_s3::presigning::config::PresigningConfig::builder()
+				.expires_in(std::time::Duration::from_secs(15 * 60))
+				.build()?,
+		)
+		.await?;
+
+	let addr = presigned_req.uri().clone();
+
+	let addr_str = addr.to_string();
+	tracing::info!(addr = %addr_str, "resolved job runner presigned request");
+
+	Ok(addr_str)
 }
 
 #[tracing::instrument]

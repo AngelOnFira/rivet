@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use proto::backend::{self, pkg::*};
+use proto::backend;
 use rivet_api::models;
 use rivet_operation::prelude::*;
 
@@ -10,14 +10,27 @@ pub fn game_mode_to_proto(
 	name_id: String,
 	game_mode: &models::CloudVersionMatchmakerGameMode,
 	matchmaker: &models::CloudVersionMatchmakerConfig,
-	regions_data: &[region::resolve::response::Region],
+	all_regions: &[backend::region::Region],
 ) -> GlobalResult<backend::matchmaker::LobbyGroup> {
 	// Derive regions
-	let regions = game_mode
+	let mut regions = game_mode
 		.regions
 		.clone()
 		.or_else(|| matchmaker.regions.clone())
 		.unwrap_or_default();
+
+	// Populate default regions
+	if regions.is_empty() {
+		for region in all_regions {
+			regions.insert(
+				region.name_id.clone(),
+				models::CloudVersionMatchmakerGameModeRegion {
+					tier: None,
+					idle_lobbies: None,
+				},
+			);
+		}
+	}
 
 	// Derive max players
 	let max_players_normal = game_mode
@@ -106,12 +119,12 @@ pub fn game_mode_to_proto(
 												error = "`port` out of bounds"
 											);
 
-											Ok(x.try_into()?)
+											Ok(x.api_try_into()?)
 										})
 										.transpose()?,
 									port_range: value
 										.port_range
-										.map(|x| (*x).try_into())
+										.map(|x| (*x).api_try_into())
 										.transpose()?,
 									proxy_protocol: ApiInto::<
 										backend::matchmaker::lobby_runtime::ProxyProtocol,
@@ -134,11 +147,11 @@ pub fn game_mode_to_proto(
 
 		regions: regions
 			.iter()
-			.map(|(k, v)| region_to_proto(k.clone(), v, game_mode, matchmaker, regions_data))
+			.map(|(k, v)| region_to_proto(k.clone(), v, game_mode, matchmaker, all_regions))
 			.collect::<GlobalResult<_>>()?,
-		max_players_normal: max_players_normal.try_into()?,
-		max_players_direct: max_players_direct.try_into()?,
-		max_players_party: max_players_party.try_into()?,
+		max_players_normal: max_players_normal.api_try_into()?,
+		max_players_direct: max_players_direct.api_try_into()?,
+		max_players_party: max_players_party.api_try_into()?,
 		listable: game_mode.listable.unwrap_or(true),
 		taggable: game_mode.taggable.unwrap_or(false),
 		allow_dynamic_max_players: game_mode.allow_dynamic_max_players.unwrap_or(false),
@@ -148,7 +161,7 @@ pub fn game_mode_to_proto(
 		actions: game_mode
 			.actions
 			.clone()
-			.map(|x| ApiTryInto::try_into(*x))
+			.map(|x| (*x).api_try_into())
 			.transpose()?,
 	})
 }
@@ -164,6 +177,7 @@ pub fn game_mode_to_openapi(
 		backend::matchmaker::lobby_runtime::Runtime::Docker(runtime) => {
 			models::CloudVersionMatchmakerGameModeRuntimeDocker {
 				image_id: Some(unwrap_ref!(runtime.build_id).as_uuid()),
+				build_args: None,
 				args: Some(runtime.args.clone()),
 				env: Some(
 					runtime
@@ -187,11 +201,11 @@ pub fn game_mode_to_openapi(
 							GlobalResult::Ok((
 								x.label.clone(),
 								models::CloudVersionMatchmakerGameModeRuntimeDockerPort {
-									port: x.target_port.map(|x| x.try_into()).transpose()?,
+									port: x.target_port.map(|x| x.api_try_into()).transpose()?,
 									port_range: x
 										.port_range
 										.clone()
-										.map(ApiTryInto::try_into)
+										.map(ApiTryInto::api_try_into)
 										.transpose()?
 										.map(Box::new),
 									protocol: Some(
@@ -238,9 +252,9 @@ pub fn game_mode_to_openapi(
 					.map(|x| region_to_openapi(x, regions_data))
 					.collect::<GlobalResult<HashMap<_, _>>>()?,
 			),
-			max_players: Some(value.max_players_normal.try_into()?),
-			max_players_direct: Some(value.max_players_direct.try_into()?),
-			max_players_party: Some(value.max_players_party.try_into()?),
+			max_players: Some(value.max_players_normal.api_try_into()?),
+			max_players_direct: Some(value.max_players_direct.api_try_into()?),
+			max_players_party: Some(value.max_players_party.api_try_into()?),
 			listable: Some(value.listable),
 			taggable: Some(value.taggable),
 			allow_dynamic_max_players: Some(value.allow_dynamic_max_players),
@@ -249,7 +263,7 @@ pub fn game_mode_to_openapi(
 
 			actions: value
 				.actions
-				.map(ApiTryInto::try_into)
+				.map(ApiTryInto::api_try_into)
 				.transpose()?
 				.map(Box::new),
 
@@ -265,7 +279,7 @@ fn region_to_proto(
 	region: &models::CloudVersionMatchmakerGameModeRegion,
 	game_mode: &models::CloudVersionMatchmakerGameMode,
 	matchmaker: &models::CloudVersionMatchmakerConfig,
-	regions_data: &[region::resolve::response::Region],
+	regions_data: &[backend::region::Region],
 ) -> GlobalResult<backend::matchmaker::lobby_group::Region> {
 	let region_id = regions_data
 		.iter()
@@ -285,7 +299,7 @@ fn region_to_proto(
 		.or_else(|| game_mode.idle_lobbies.clone())
 		.or_else(|| matchmaker.idle_lobbies.clone())
 		.map(|x| *x)
-		.map(ApiTryInto::try_into)
+		.map(ApiTryInto::api_try_into)
 		.transpose()?;
 
 	Ok(backend::matchmaker::lobby_group::Region {
@@ -315,7 +329,7 @@ fn region_to_openapi(
 			tier: Some(region.tier_name_id.to_owned()),
 			idle_lobbies: region
 				.idle_lobbies
-				.map(ApiTryInto::try_into)
+				.map(ApiTryInto::api_try_into)
 				.transpose()?
 				.map(Box::new),
 		},
@@ -327,7 +341,7 @@ impl ApiTryFrom<models::CloudVersionMatchmakerGameModeIdleLobbiesConfig>
 {
 	type Error = GlobalError;
 
-	fn try_from(
+	fn api_try_from(
 		value: models::CloudVersionMatchmakerGameModeIdleLobbiesConfig,
 	) -> GlobalResult<Self> {
 		ensure_with!(
@@ -342,8 +356,8 @@ impl ApiTryFrom<models::CloudVersionMatchmakerGameModeIdleLobbiesConfig>
 		);
 
 		Ok(backend::matchmaker::lobby_group::IdleLobbies {
-			min_idle_lobbies: value.min.try_into()?,
-			max_idle_lobbies: value.max.try_into()?,
+			min_idle_lobbies: value.min.api_try_into()?,
+			max_idle_lobbies: value.max.api_try_into()?,
 		})
 	}
 }
@@ -353,10 +367,10 @@ impl ApiTryFrom<backend::matchmaker::lobby_group::IdleLobbies>
 {
 	type Error = GlobalError;
 
-	fn try_from(value: backend::matchmaker::lobby_group::IdleLobbies) -> GlobalResult<Self> {
+	fn api_try_from(value: backend::matchmaker::lobby_group::IdleLobbies) -> GlobalResult<Self> {
 		Ok(models::CloudVersionMatchmakerGameModeIdleLobbiesConfig {
-			min: value.min_idle_lobbies.try_into()?,
-			max: value.max_idle_lobbies.try_into()?,
+			min: value.min_idle_lobbies.api_try_into()?,
+			max: value.max_idle_lobbies.api_try_into()?,
 		})
 	}
 }
@@ -404,22 +418,22 @@ impl ApiTryFrom<models::CloudVersionMatchmakerGameModeActions>
 {
 	type Error = GlobalError;
 
-	fn try_from(value: models::CloudVersionMatchmakerGameModeActions) -> GlobalResult<Self> {
+	fn api_try_from(value: models::CloudVersionMatchmakerGameModeActions) -> GlobalResult<Self> {
 		Ok(backend::matchmaker::lobby_group::Actions {
 			find: value
 				.find
 				.clone()
-				.map(|x| ApiTryInto::try_into(*x))
+				.map(|x| (*x).api_try_into())
 				.transpose()?,
 			join: value
 				.join
 				.clone()
-				.map(|x| ApiTryInto::try_into(*x))
+				.map(|x| (*x).api_try_into())
 				.transpose()?,
 			create: value
 				.create
 				.clone()
-				.map(|x| ApiTryInto::try_into(*x))
+				.map(|x| (*x).api_try_into())
 				.transpose()?,
 		})
 	}
@@ -430,21 +444,21 @@ impl ApiTryFrom<backend::matchmaker::lobby_group::Actions>
 {
 	type Error = GlobalError;
 
-	fn try_from(value: backend::matchmaker::lobby_group::Actions) -> GlobalResult<Self> {
+	fn api_try_from(value: backend::matchmaker::lobby_group::Actions) -> GlobalResult<Self> {
 		Ok(models::CloudVersionMatchmakerGameModeActions {
 			find: value
 				.find
-				.map(ApiTryInto::try_into)
+				.map(ApiTryInto::api_try_into)
 				.transpose()?
 				.map(Box::new),
 			join: value
 				.join
-				.map(ApiTryInto::try_into)
+				.map(ApiTryInto::api_try_into)
 				.transpose()?
 				.map(Box::new),
 			create: value
 				.create
-				.map(ApiTryInto::try_into)
+				.map(ApiTryInto::api_try_into)
 				.transpose()?
 				.map(Box::new),
 		})
@@ -456,7 +470,7 @@ impl ApiTryFrom<models::CloudVersionMatchmakerGameModeVerificationConfig>
 {
 	type Error = GlobalError;
 
-	fn try_from(
+	fn api_try_from(
 		value: models::CloudVersionMatchmakerGameModeVerificationConfig,
 	) -> GlobalResult<Self> {
 		Ok(backend::matchmaker::VerificationConfig {
@@ -471,7 +485,7 @@ impl ApiTryFrom<backend::matchmaker::VerificationConfig>
 {
 	type Error = GlobalError;
 
-	fn try_from(value: backend::matchmaker::VerificationConfig) -> GlobalResult<Self> {
+	fn api_try_from(value: backend::matchmaker::VerificationConfig) -> GlobalResult<Self> {
 		Ok(models::CloudVersionMatchmakerGameModeVerificationConfig {
 			url: value.url,
 			headers: value.headers,
@@ -484,7 +498,7 @@ impl ApiTryFrom<models::CloudVersionMatchmakerGameModeFindConfig>
 {
 	type Error = GlobalError;
 
-	fn try_from(value: models::CloudVersionMatchmakerGameModeFindConfig) -> GlobalResult<Self> {
+	fn api_try_from(value: models::CloudVersionMatchmakerGameModeFindConfig) -> GlobalResult<Self> {
 		Ok(backend::matchmaker::FindConfig {
 			enabled: value.enabled,
 			identity_requirement: value
@@ -493,7 +507,7 @@ impl ApiTryFrom<models::CloudVersionMatchmakerGameModeFindConfig>
 				.unwrap_or(backend::matchmaker::IdentityRequirement::None) as i32,
 			verification: value
 				.verification
-				.map(|x| ApiTryInto::try_into(*x))
+				.map(|x| (*x).api_try_into())
 				.transpose()?,
 		})
 	}
@@ -504,7 +518,7 @@ impl ApiTryFrom<backend::matchmaker::FindConfig>
 {
 	type Error = GlobalError;
 
-	fn try_from(value: backend::matchmaker::FindConfig) -> GlobalResult<Self> {
+	fn api_try_from(value: backend::matchmaker::FindConfig) -> GlobalResult<Self> {
 		Ok(models::CloudVersionMatchmakerGameModeFindConfig {
 			enabled: value.enabled,
 			identity_requirement: Some(
@@ -516,7 +530,7 @@ impl ApiTryFrom<backend::matchmaker::FindConfig>
 			),
 			verification: value
 				.verification
-				.map(ApiTryInto::try_into)
+				.map(ApiTryInto::api_try_into)
 				.transpose()?
 				.map(Box::new),
 		})
@@ -528,7 +542,7 @@ impl ApiTryFrom<models::CloudVersionMatchmakerGameModeJoinConfig>
 {
 	type Error = GlobalError;
 
-	fn try_from(value: models::CloudVersionMatchmakerGameModeJoinConfig) -> GlobalResult<Self> {
+	fn api_try_from(value: models::CloudVersionMatchmakerGameModeJoinConfig) -> GlobalResult<Self> {
 		Ok(backend::matchmaker::JoinConfig {
 			enabled: value.enabled,
 			identity_requirement: value
@@ -537,7 +551,7 @@ impl ApiTryFrom<models::CloudVersionMatchmakerGameModeJoinConfig>
 				.unwrap_or(backend::matchmaker::IdentityRequirement::None) as i32,
 			verification: value
 				.verification
-				.map(|x| ApiTryInto::try_into(*x))
+				.map(|x| (*x).api_try_into())
 				.transpose()?,
 		})
 	}
@@ -548,7 +562,7 @@ impl ApiTryFrom<backend::matchmaker::JoinConfig>
 {
 	type Error = GlobalError;
 
-	fn try_from(value: backend::matchmaker::JoinConfig) -> GlobalResult<Self> {
+	fn api_try_from(value: backend::matchmaker::JoinConfig) -> GlobalResult<Self> {
 		Ok(models::CloudVersionMatchmakerGameModeJoinConfig {
 			enabled: value.enabled,
 			identity_requirement: Some(
@@ -560,7 +574,7 @@ impl ApiTryFrom<backend::matchmaker::JoinConfig>
 			),
 			verification: value
 				.verification
-				.map(ApiTryInto::try_into)
+				.map(ApiTryInto::api_try_into)
 				.transpose()?
 				.map(Box::new),
 		})
@@ -572,7 +586,7 @@ impl ApiTryFrom<models::CloudVersionMatchmakerGameModeCreateConfig>
 {
 	type Error = GlobalError;
 
-	fn try_from(value: models::CloudVersionMatchmakerGameModeCreateConfig) -> GlobalResult<Self> {
+	fn api_try_from(value: models::CloudVersionMatchmakerGameModeCreateConfig) -> GlobalResult<Self> {
 		if let Some(max_lobbies_per_identity) = value.max_lobbies_per_identity {
 			ensure_with!(
 				max_lobbies_per_identity >= 0,
@@ -589,13 +603,13 @@ impl ApiTryFrom<models::CloudVersionMatchmakerGameModeCreateConfig>
 				.unwrap_or(backend::matchmaker::IdentityRequirement::None) as i32,
 			verification: value
 				.verification
-				.map(|x| ApiTryInto::try_into(*x))
+				.map(|x| (*x).api_try_into())
 				.transpose()?,
 			enable_public: value.enable_public.unwrap_or(false),
 			enable_private: value.enable_private.unwrap_or(true),
 			max_lobbies_per_identity: value
 				.max_lobbies_per_identity
-				.map(ApiTryInto::try_into)
+				.map(ApiTryInto::api_try_into)
 				.transpose()?,
 		})
 	}
@@ -606,7 +620,7 @@ impl ApiTryFrom<backend::matchmaker::CreateConfig>
 {
 	type Error = GlobalError;
 
-	fn try_from(value: backend::matchmaker::CreateConfig) -> GlobalResult<Self> {
+	fn api_try_from(value: backend::matchmaker::CreateConfig) -> GlobalResult<Self> {
 		Ok(models::CloudVersionMatchmakerGameModeCreateConfig {
 			enabled: value.enabled,
 			identity_requirement: Some(
@@ -618,14 +632,14 @@ impl ApiTryFrom<backend::matchmaker::CreateConfig>
 			),
 			verification: value
 				.verification
-				.map(ApiTryInto::try_into)
+				.map(ApiTryInto::api_try_into)
 				.transpose()?
 				.map(Box::new),
 			enable_public: Some(value.enable_public),
 			enable_private: Some(value.enable_private),
 			max_lobbies_per_identity: value
 				.max_lobbies_per_identity
-				.map(ApiTryInto::try_into)
+				.map(ApiTryInto::api_try_into)
 				.transpose()?,
 		})
 	}

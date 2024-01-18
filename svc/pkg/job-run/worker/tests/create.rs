@@ -49,7 +49,7 @@ async fn basic_http(ctx: TestCtx) {
 		],
 		job_spec_json: template_res.job_spec_json.clone(),
 		proxied_ports: vec![
-			job_run::msg::create::ProxiedPort {
+			backend::job::ProxiedPortConfig {
 				#[allow(deprecated)]
 				target_nomad_port_label: Some("http".into()),
 				ingress_port: None,
@@ -57,7 +57,7 @@ async fn basic_http(ctx: TestCtx) {
 				proxy_protocol: backend::job::ProxyProtocol::Http as i32,
 				ssl_domain_mode: backend::job::SslDomainMode::Exact as i32,
 			},
-			job_run::msg::create::ProxiedPort {
+			backend::job::ProxiedPortConfig {
 				#[allow(deprecated)]
 				target_nomad_port_label: Some("http".into()),
 				ingress_port: None,
@@ -84,7 +84,7 @@ async fn basic_http(ctx: TestCtx) {
 		}
 	}
 
-	let ValidateJobOutput { ip, port, .. } =
+	let ValidateJobOutput { .. } =
 		validate_job(ctx.crdb().await.unwrap(), run_id, region_id, "http").await;
 
 	// Test against origin
@@ -141,7 +141,7 @@ async fn basic_tcp(ctx: TestCtx) {
 		],
 		job_spec_json: template_res.job_spec_json.clone(),
 		proxied_ports: vec![
-			job_run::msg::create::ProxiedPort {
+			backend::job::ProxiedPortConfig {
 				#[allow(deprecated)]
 				target_nomad_port_label: Some("tcp".into()),
 				ingress_port: None,
@@ -149,7 +149,7 @@ async fn basic_tcp(ctx: TestCtx) {
 				proxy_protocol: backend::job::ProxyProtocol::Tcp as i32,
 				ssl_domain_mode: backend::job::SslDomainMode::Exact as i32,
 			},
-			job_run::msg::create::ProxiedPort {
+			backend::job::ProxiedPortConfig {
 				#[allow(deprecated)]
 				target_nomad_port_label: Some("tcp".into()),
 				ingress_port: None,
@@ -177,8 +177,8 @@ async fn basic_tcp(ctx: TestCtx) {
 	}
 
 	let ValidateJobOutput {
-		ip,
-		port,
+		ip: _,
+		port: _,
 		proxied_ports,
 	} = validate_job(ctx.crdb().await.unwrap(), run_id, region_id, "tcp").await;
 	let ingress_port_tcp = proxied_ports
@@ -249,7 +249,7 @@ async fn basic_udp(ctx: TestCtx) {
 		],
 		job_spec_json: template_res.job_spec_json.clone(),
 		proxied_ports: vec![
-			job_run::msg::create::ProxiedPort {
+			backend::job::ProxiedPortConfig {
 				#[allow(deprecated)]
 				target_nomad_port_label: Some("udp".into()),
 				ingress_port: None,
@@ -277,8 +277,8 @@ async fn basic_udp(ctx: TestCtx) {
 	}
 
 	let ValidateJobOutput {
-		ip,
-		port,
+		ip: _,
+		port: _,
 		proxied_ports,
 	} = validate_job(ctx.crdb().await.unwrap(), run_id, region_id, "udp").await;
 	let ingress_port_udp = proxied_ports.first().unwrap().ingress_port;

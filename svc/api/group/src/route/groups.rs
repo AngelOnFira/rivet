@@ -38,17 +38,12 @@ pub async fn profile(
 	let user_ent = ctx.auth().user(ctx.op_ctx()).await?;
 
 	// Fetch team data
-	let (teams, dev_teams) = tokio::try_join!(
-		op!([ctx] team_get {
-			team_ids: vec![group_id.into()],
-		}),
-		op!([ctx] team_dev_get {
-			team_ids: vec![group_id.into()],
-		}),
-	)?;
+	let teams = op!([ctx] team_get {
+		team_ids: vec![group_id.into()],
+	})
+	.await?;
 
 	let team = unwrap!(teams.teams.first()).clone();
-	let is_developer = !dev_teams.teams.is_empty();
 
 	// Wait for an update if needed
 	let (update, update_ts) = if let Some(anchor) = watch_index.to_consumer()? {
@@ -163,7 +158,7 @@ pub async fn profile(
 			is_current_identity_member,
 			publicity: unwrap!(backend::team::Publicity::from_i32(team.publicity)).api_into(),
 			member_count: team_members_res.members.len() as i32,
-			is_developer,
+			is_developer: true,
 
 			members: Vec::new(),
 			join_requests: Vec::new(),
@@ -356,7 +351,7 @@ pub async fn join_requests(
 	ctx: Ctx<Auth>,
 	group_id: Uuid,
 	watch_index: WatchIndexQuery,
-	query: ListJoinRequestsQuery,
+	_query: ListJoinRequestsQuery,
 ) -> GlobalResult<models::GetGroupJoinRequestsResponse> {
 	let user_ent = ctx.auth().user(ctx.op_ctx()).await?;
 
@@ -625,6 +620,15 @@ pub async fn create(
 ) -> GlobalResult<models::CreateGroupResponse> {
 	let user_ent = ctx.auth().user(ctx.op_ctx()).await?;
 
+	let publicity = unwrap!(std::env::var("RIVET_ACCESS_KIND").ok());
+	match publicity.as_str() {
+		"public" => {}
+		"private" => {
+			ctx.auth().admin(ctx.op_ctx()).await?;
+		}
+		_ => bail!("invalid RIVET_ACCESS_KIND"),
+	}
+
 	let team_id = Uuid::new_v4();
 	let create_res = msg!([ctx] team::msg::create(team_id) -> Result<team::msg::create_complete, team::msg::create_fail> {
 		team_id: Some(team_id.into()),
@@ -779,26 +783,15 @@ pub async fn search(
 	})
 	.await?;
 
-	let (team_res, team_dev_res) = tokio::try_join!(
-		op!([ctx] team_get {
-			team_ids: team_search_res.team_ids.clone(),
-		}),
-		op!([ctx] team_dev_get {
-			team_ids: team_search_res.team_ids.clone(),
-		}),
-	)?;
+	let team_res = op!([ctx] team_get {
+		team_ids: team_search_res.team_ids.clone(),
+	})
+	.await?;
 
 	let group_handles = team_res
 		.teams
 		.iter()
-		.map(|team| {
-			let is_developer = team_dev_res
-				.teams
-				.iter()
-				.any(|dev_team| team.team_id == dev_team.team_id);
-
-			convert::group::handle(team, is_developer)
-		})
+		.map(convert::group::handle)
 		.collect::<GlobalResult<Vec<_>>>()?;
 
 	Ok(models::SearchGroupsResponse {
@@ -909,7 +902,7 @@ pub async fn prepare_avatar_upload(
 			backend::upload::PrepareFile {
 				path: format!("image.{}", ext),
 				mime: Some(format!("image/{}", ext)),
-				content_length: body.content_length.try_into()?,
+				content_length: body.content_length.api_try_into()?,
 				nsfw_score_threshold: Some(util_nsfw::score_thresholds::TEAM_AVATAR),
 				..Default::default()
 			},
@@ -923,7 +916,7 @@ pub async fn prepare_avatar_upload(
 
 	Ok(new_models::GroupPrepareAvatarUploadResponse {
 		upload_id,
-		presigned_request: Box::new(presigned_request.clone().try_into()?),
+		presigned_request: Box::new(presigned_request.clone().api_try_into()?),
 	})
 }
 
@@ -991,7 +984,7 @@ pub async fn create_invite(
 	let res = msg!([ctx] team_invite::msg::create(group_id) -> team_invite::msg::create_complete {
 		team_id: Some(group_id.into()),
 		ttl: body.ttl,
-		max_use_count: body.use_count.map(|v| v.try_into()).transpose()?,
+		max_use_count: body.use_count.map(|v| v.api_try_into()).transpose()?,
 	})
 	.await?;
 
@@ -1114,9 +1107,7 @@ pub async fn get_invite(
 		let team = unwrap!(team_res.teams.first());
 
 		Ok(models::GetGroupInviteResponse {
-			// Argument `is_developer` is false here because that information is not needed in the context
-			// of an invite
-			group: convert::group::handle(team, false)?,
+			group: convert::group::handle(team)?,
 		})
 	} else {
 		bail_with!(GROUP_INVITE_CODE_INVALID);
@@ -1270,7 +1261,7 @@ pub async fn bans(
 	ctx: Ctx<Auth>,
 	group_id: Uuid,
 	watch_index: WatchIndexQuery,
-	query: ListBansQuery,
+	_query: ListBansQuery,
 ) -> GlobalResult<models::GetGroupBansResponse> {
 	let user_ent = ctx.auth().user(ctx.op_ctx()).await?;
 

@@ -5,7 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [23.2.0-rc1] - 2023-12-01
+## [23.2.0-rc.2] - Unreleased
+
+### Added
+
+-   **Infra** New `job-runner` crate responsible for managing the OCI bundle runtime & log shipping on the machine
+-   **Infra** Jobs now log an explicit rate message when logs are rate limited & truncated
+-   **Infra** `infra-artifacts` Terraform plan & S3 bucket used for automating building & uploading internal binaries, etc.
+
+### Changed
+
+-   **Matchmaker** Allow excluding `matchmaker.regions` in order to enable all regions
+-   **Matchmaker** Lowered internal overhead of log shipping for lobbies
+-   **Matchmaker** Game mode names are now more lenient to include capital letters & underscores
+-   **API** Return `API_REQUEST_TIMEOUT` error after 50s (see `docs/infrastructure/API_TIMEOUTS.md` for context)
+-   **API** Move generated client APIs to sdks/
+-   Lower long poll timeout from 60s -> 40s
+-   **Bolt** Moved additional project roots to Bolt.toml
+-   **types** Support multiple project roots for reusing Protobuf types
+
+### Security
+
+-   Resolve [RUSTSEC-2023-0044](https://rustsec.org/advisories/RUSTSEC-2023-0074)
+
+### Fixed
+
+-   **Infra** runc rootfs is now a writable file system
+-   **Matchmaker** Logs not shipping if lobby exits immediately
+-   **Matchmaker** Returning `lnd-atl` instead of `dev-lcl` as the mocked mocked region ID in the region list
+-   **API** 520 error when long polling
+-   **api-cloud** Returning wrong domain for `domains.cdn`
+-   **Infra** Fix Prometheus storage retention conversion between mebibytes and megabytes
+-   **Infra** Fix typo in Game Guard Traefik config not exposing API endpoint
+-   **Infra** Kill signal for servers was `SIGINT` instead of `SIGTERM`
+
+## [23.2.0-rc.1] - 2023-12-01
 
 ### Added
 
@@ -14,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Bolt** Added `bolt admin login` to allow for logging in without an email provider setup. Automatically turns the user into an admin for immediate access to the developer dashboard.
 -   **Bolt** Fixed `bolt db migrate create`
 -   **Infra** Added `user-admin-set` service for creating an admin user
+-   **Infra** Added Better Uptime monitor for regions with pools
 
 ### Changed
 
@@ -55,7 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Dev** Bolt automatically builds with Nix shell
 -   **Bolt** `--no-purge` flag to `test` to prevent purging Nomad jobs
 -   **Matchmaker** Expose hardware metrics to container with `RIVET_CPU`, `RIVET_MEMORY`, and `RIVET_MEMORY_OVERSUBSCRIBE`
--   **api-cloud** `GET /cloud/bootstrapp` to provide intiial config data to the hub
+-   **api-cloud** `GET /cloud/bootstrapp` to provide initial config data to the hub
 -   **api-cloud** Dynamically send Turnstile site key to hub
 -   **Infra** Rate limit on creating new SQL connections to prevent stampeding connections
 
@@ -163,7 +198,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 -   **Portal** Skip captcha if no Turnstile key provided
--   **Infra** Missing dpenedency on mounting volumn before setting permissions of /var/\* for Cockroach, ClickHouse, Prometheus, and Traffic Server
+-   **Infra** Missing dpenedency on mounting volume before setting permissions of /var/\* for Cockroach, ClickHouse, Prometheus, and Traffic Server
 -   **Chrip** Empty message parameters now have placeholder so NATS doesn't throw an error
 -   **Chrip** Messages with no parameters no longer have a trailing dot
 -   **Bolt** Correctly resolve project root when building services natively

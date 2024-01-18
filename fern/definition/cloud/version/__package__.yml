@@ -6,12 +6,13 @@ imports:
   cdn: cdn/__package__.yml
   matchmaker: matchmaker/__package__.yml
   kv: kv/__package__.yml
-  identity: identity/__pacakge__.yml
+  identity: identity/__package__.yml
 
 types:
   Config:
     docs: Cloud configuration for a given version.
     properties:
+      scripts: optional<map<string, string>>
       engine: optional<engine.Config>
       cdn: optional<cdn.Config>
       matchmaker: optional<matchmaker.Config>

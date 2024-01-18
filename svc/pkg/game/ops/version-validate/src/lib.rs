@@ -353,10 +353,9 @@ async fn handle(
 
 		let mut unique_lobby_names = HashSet::new();
 		for (lobby_index, lobby_group) in matchmaker.lobby_groups.iter().take(32).enumerate() {
-			tracing::info!(%lobby_group.name_id, valid = util::check::ident(&lobby_group.name_id), "checking name id");
 			let lobby_group_label = format!("*{}*", lobby_group.name_id);
 
-			if util::check::ident(&lobby_group.name_id) {
+			if util::check::ident_lenient(&lobby_group.name_id) {
 				if unique_lobby_names.contains(lobby_group.name_id.trim()) {
 					errors.push(util::err_path![
 						"config",
@@ -445,32 +444,36 @@ async fn handle(
 				]);
 			}
 
-			// Check if there are regions
-			if lobby_group.regions.is_empty() {
-				errors.push(util::err_path![
-					"config",
-					"matchmaker",
-					"game-modes",
-					lobby_group_label,
-					"no-regions",
-				]);
-			} else {
-				// Validate region ids
-				for (region_index, region) in lobby_group.regions.iter().take(64).enumerate() {
-					let region_config = regions_res
-						.regions
-						.iter()
-						.find(|r| r.region_id == region.region_id);
+			// Validate region ids
+			for (region_index, region) in lobby_group.regions.iter().take(64).enumerate() {
+				let region_config = regions_res
+					.regions
+					.iter()
+					.find(|r| r.region_id == region.region_id);
 
-					if let Some(region_config) = region_config {
-						let region_label = format!("*{}*", region_config.name_id);
+				if let Some(region_config) = region_config {
+					let region_label = format!("*{}*", region_config.name_id);
 
-						// Validate tier name id
-						if !util::check::ident(&region.tier_name_id)
-							|| !tiers
-								.iter()
-								.any(|tier| tier.tier_name_id == region.tier_name_id)
-						{
+					// Validate tier name id
+					if !util::check::ident(&region.tier_name_id)
+						|| !tiers
+							.iter()
+							.any(|tier| tier.tier_name_id == region.tier_name_id)
+					{
+						errors.push(util::err_path![
+							"config",
+							"matchmaker",
+							"game-modes",
+							lobby_group_label,
+							"regions",
+							region_label,
+							"tier-name-id-invalid",
+						]);
+					}
+
+					// Validate idle lobbies
+					if let Some(idle_lobbies) = &region.idle_lobbies {
+						if idle_lobbies.min_idle_lobbies > idle_lobbies.max_idle_lobbies {
 							errors.push(util::err_path![
 								"config",
 								"matchmaker",
@@ -478,60 +481,45 @@ async fn handle(
 								lobby_group_label,
 								"regions",
 								region_label,
-								"tier-name-id-invalid",
+								"idle-lobbies",
+								"min-gt-max",
 							]);
 						}
-
-						// Validate idle lobbies
-						if let Some(idle_lobbies) = &region.idle_lobbies {
-							if idle_lobbies.min_idle_lobbies > idle_lobbies.max_idle_lobbies {
-								errors.push(util::err_path![
-									"config",
-									"matchmaker",
-									"game-modes",
-									lobby_group_label,
-									"regions",
-									region_label,
-									"idle-lobbies",
-									"min-gt-max",
-								]);
-							}
-							if idle_lobbies.min_idle_lobbies > MAX_MIN_IDLE_LOBBY_COUNT {
-								errors.push(util::err_path![
-									"config",
-									"matchmaker",
-									"game-modes",
-									lobby_group_label,
-									"regions",
-									region_label,
-									"idle-lobbies",
-									"min-too-high",
-								]);
-							}
-							if idle_lobbies.max_idle_lobbies > MAX_MAX_IDLE_LOBBY_COUNT {
-								errors.push(util::err_path![
-									"config",
-									"matchmaker",
-									"game-modes",
-									lobby_group_label,
-									"regions",
-									region_label,
-									"idle-lobbies",
-									"max-too-high",
-								]);
-							}
+						if idle_lobbies.min_idle_lobbies > MAX_MIN_IDLE_LOBBY_COUNT {
+							errors.push(util::err_path![
+								"config",
+								"matchmaker",
+								"game-modes",
+								lobby_group_label,
+								"regions",
+								region_label,
+								"idle-lobbies",
+								"min-too-high",
+							]);
 						}
-					} else {
-						errors.push(util::err_path![
-							"config",
-							"matchmaker",
-							"game-modes",
-							lobby_group_label,
-							"regions",
-							region_index,
-							"invalid",
-						]);
+						if idle_lobbies.max_idle_lobbies > MAX_MAX_IDLE_LOBBY_COUNT {
+							errors.push(util::err_path![
+								"config",
+								"matchmaker",
+								"game-modes",
+								lobby_group_label,
+								"regions",
+								region_label,
+								"idle-lobbies",
+								"max-too-high",
+							]);
+						}
 					}
+				} else {
+					errors.push(util::err_path![
+						"config",
+						"matchmaker",
+						"game-modes",
+						lobby_group_label,
+						"regions",
+						region_index,
+						"invalid",
+					]);
 				}
 			}
 
@@ -707,7 +695,7 @@ async fn handle(
 							.any(|x| *x == env_var.key);
 						let conflicts_port = docker_config.ports.iter().any(|port| {
 							if port.target_port.is_some() {
-								env_var.key == format!("PORT_{}", port.label.replace("-", "_"))
+								env_var.key == format!("PORT_{}", port.label.replace('-', "_"))
 							} else if port.port_range.is_some() {
 								env_var.key == format!("PORT_RANGE_{}_MIN", port.label)
 									|| env_var.key == format!("PORT_RANGE_{}_MAX", port.label)
@@ -878,7 +866,7 @@ async fn handle(
 								| LobbyRuntimeProxyProtocol::Tcp
 								| LobbyRuntimeProxyProtocol::TcpTls
 								| LobbyRuntimeProxyProtocol::Udp,
-								Some(target_port),
+								Some(_target_port),
 								None,
 							) => {
 								// Valid

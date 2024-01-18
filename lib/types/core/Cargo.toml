@@ -1,9 +1,12 @@
 [package]
 name = "types"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 authors = ["Rivet Gaming, LLC <developer@rivet.gg>"]
 license = "Apache-2.0"
+
+[features]
+protobuf-src = ["types-build/protobuf-src"]
 
 [dependencies]
 chirp-types = { path = "../../chirp/types" }

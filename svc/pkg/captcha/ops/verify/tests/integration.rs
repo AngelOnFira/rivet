@@ -189,7 +189,7 @@ async fn captcha_timing(ctx: TestCtx) {
 
 	tracing::info!("initial verification");
 	captcha_verify(&ctx, &topic, &remote_address, &captcha_config, true).await;
-	let verified_ts = util::timestamp::now();
+	let _verified_ts = util::timestamp::now();
 
 	tracing::info!("checking verification worked");
 	let needs_verification = captcha_request(&ctx, &topic, &remote_address, &captcha_config).await;
@@ -309,7 +309,7 @@ async fn captcha_verify(
 		Err(err) if err.is(formatted_error::code::CAPTCHA_CAPTCHA_FAILED) => {
 			assert!(!pass, "verify should have passed");
 		}
-		Err(err) => Err(err).unwrap(),
+		Err(err) => panic!("{:?}", err),
 	}
 }
 

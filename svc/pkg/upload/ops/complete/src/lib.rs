@@ -23,7 +23,7 @@ struct FileRow {
 async fn handle(
 	ctx: OperationContext<upload::complete::Request>,
 ) -> GlobalResult<upload::complete::Response> {
-	let crdb = ctx.crdb().await?;
+	let _crdb = ctx.crdb().await?;
 
 	let upload_id = unwrap_ref!(ctx.upload_id).as_uuid();
 
@@ -71,6 +71,7 @@ async fn handle(
 	msg!([ctx] analytics::msg::event_create() {
 		events: vec![
 			analytics::msg::event_create::Event {
+				event_id: Some(Uuid::new_v4().into()),
 				name: "upload.complete".into(),
 				properties_json: Some(serde_json::to_string(&json!({
 					"user_id": user_id,
@@ -166,7 +167,7 @@ async fn validate_profanity_scores(
 		.await?;
 
 	let scores = if !nsfw_required_scores.is_empty() {
-		// Score teh images
+		// Score the images
 		let score_res = op!([ctx] nsfw_image_score {
 			image_urls: nsfw_required_scores.keys().cloned().collect(),
 		})
@@ -179,6 +180,7 @@ async fn validate_profanity_scores(
 				msg!([ctx] analytics::msg::event_create() {
 					events: vec![
 						analytics::msg::event_create::Event {
+							event_id: Some(Uuid::new_v4().into()),
 							name: "upload.nsfw_detected".into(),
 							properties_json: Some(serde_json::to_string(&json!({
 								"user_id": user_id,

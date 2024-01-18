@@ -22,7 +22,6 @@ pub async fn run_from_env(pools: rivet_pools::Pools) -> GlobalResult<()> {
 	let mut join_set = tokio::task::JoinSet::new();
 	spawn_workers![
 		[shared_client, pools, cache, join_set]
-		analytics_worker,
 		cdn_worker,
 		cf_custom_hostname_worker,
 		cloud_worker,
@@ -34,7 +33,6 @@ pub async fn run_from_env(pools: rivet_pools::Pools) -> GlobalResult<()> {
 		mm_worker,
 		module_worker,
 		push_notification_worker,
-		team_dev_worker,
 		team_invite_worker,
 		team_worker,
 		upload_worker,

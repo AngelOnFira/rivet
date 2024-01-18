@@ -1,7 +1,7 @@
 [package]
 name = "rivet-convert"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 authors = ["Rivet Gaming, LLC <developer@rivet.gg>"]
 license = "Apache-2.0"
 
@@ -32,7 +32,6 @@ mm-player-count-for-namespace = { path = "../../svc/pkg/mm/ops/player-count-for-
 region-get = { path = "../../svc/pkg/region/ops/get" }
 region-list = { path = "../../svc/pkg/region/ops/list" }
 region-resolve = { path = "../../svc/pkg/region/ops/resolve" }
-team-dev-get = { path = "../../svc/pkg/team-dev/ops/get" }
 team-get = { path = "../../svc/pkg/team/ops/get" }
 team-member-count = { path = "../../svc/pkg/team/ops/member-count" }
 team-profile-validate = { path = "../../svc/pkg/team/ops/profile-validate" }
@@ -44,6 +43,6 @@ user-identity-get = { path = "../../svc/pkg/user-identity/ops/get" }
 user-presence-get = { path = "../../svc/pkg/user-presence/ops/get" }
 user-team-list = { path = "../../svc/pkg/user/ops/team-list" }
 
-rivet-api = { path = "../../gen/openapi/internal/rust" }
+rivet-api = { path = "../../sdks/rust" }
 rivet-group-server = { path = "../../lib/smithy-output/api-group/rust-server" }
 rivet-portal-server = { path = "../../lib/smithy-output/api-portal/rust-server" }

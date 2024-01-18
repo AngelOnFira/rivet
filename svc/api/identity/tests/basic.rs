@@ -2,7 +2,7 @@ use std::{str::FromStr, sync::Once};
 
 use proto::backend::{self, pkg::*};
 use regex::Regex;
-use rivet_api::*;
+
 use rivet_claims::ClaimsDecode;
 use rivet_identity::{model, output};
 use rivet_operation::prelude::*;
@@ -100,7 +100,7 @@ impl Ctx {
 
 		let build_res = op!([ctx] faker_build {
 			game_id: game_res.game_id,
-			image: faker::build::Image::MmLobbyAutoReady as i32,
+			image: backend::faker::Image::MmLobbyAutoReady as i32,
 		})
 		.await
 		.unwrap();

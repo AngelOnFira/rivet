@@ -1,7 +1,7 @@
 use proto::backend::{self, pkg::*};
 use rivet_operation::prelude::*;
-use serde_json::{json, Value};
-use std::{str::FromStr, sync::Once, time::Duration};
+use serde_json::json;
+use std::{str::FromStr, sync::Once};
 
 use rivet_api::{
 	apis::{configuration::Configuration, *},
@@ -188,7 +188,7 @@ impl Ctx {
 
 		let build_res = op!([ctx] faker_build {
 			game_id: game_res.game_id,
-			image: faker::build::Image::MmLobbyAutoReady as i32,
+			image: backend::faker::Image::MmLobbyAutoReady as i32,
 		})
 		.await
 		.unwrap();

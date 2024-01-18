@@ -69,7 +69,7 @@ pub async fn get_custom_avatars(
 			GlobalResult::Ok((
 				upload.create_ts,
 				models::CloudCustomAvatarSummary {
-					upload_id: upload_id,
+					upload_id,
 					display_name: profile_file_name.clone(),
 					url: upload.complete_ts.map(|_| {
 						util::route::custom_avatar(upload_id, &profile_file_name, upload.provider)
@@ -129,7 +129,7 @@ pub async fn prepare_avatar_upload(
 			backend::upload::PrepareFile {
 				path: format!("image.{ext}"),
 				mime: Some(format!("image/{ext}")),
-				content_length: body.content_length.try_into()?,
+				content_length: body.content_length.api_try_into()?,
 				nsfw_score_threshold: Some(util_nsfw::score_thresholds::USER_AVATAR),
 				..Default::default()
 			},
@@ -143,7 +143,7 @@ pub async fn prepare_avatar_upload(
 
 	Ok(models::CloudGamesPrepareCustomAvatarUploadResponse {
 		upload_id,
-		presigned_request: Box::new(presigned_request.clone().try_into()?),
+		presigned_request: Box::new(presigned_request.clone().api_try_into()?),
 	})
 }
 

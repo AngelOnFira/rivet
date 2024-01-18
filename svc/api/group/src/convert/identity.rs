@@ -21,13 +21,13 @@ pub fn handle(
 		.iter()
 		.find(|presence| presence.user_id == user.user_id));
 	let user_presence = unwrap_ref!(user_presence.presence);
-	let status = unwrap!(backend::user::Status::from_i32(user_presence.status));
+	let _status = unwrap!(backend::user::Status::from_i32(user_presence.status));
 
 	Ok(models::IdentityHandle {
 		identity_id: user_id.to_string(),
 		display_name: user.display_name.clone(),
 		account_number: user.account_number as i32,
-		avatar_url: util::route::user_avatar(&user),
+		avatar_url: util::route::user_avatar(user),
 		presence: Some(presence(
 			user_presence,
 			&presences_ctx.games,

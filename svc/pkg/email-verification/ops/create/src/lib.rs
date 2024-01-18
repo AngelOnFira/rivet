@@ -8,7 +8,7 @@ use serde_json::json;
 async fn handle(
 	ctx: OperationContext<email_verification::create::Request>,
 ) -> GlobalResult<email_verification::create::Response> {
-	let crdb = ctx.crdb().await?;
+	let _crdb = ctx.crdb().await?;
 
 	let email_parse = EmailAddress::parse(&ctx.email, None);
 	let email = unwrap_ref!(email_parse);
@@ -88,6 +88,7 @@ async fn handle(
 	msg!([ctx] analytics::msg::event_create() {
 		events: vec![
 			analytics::msg::event_create::Event {
+				event_id: Some(Uuid::new_v4().into()),
 				name: "email_verification.create".into(),
 				properties_json: Some(serde_json::to_string(&json!({
 					"verification_id": verification_id,

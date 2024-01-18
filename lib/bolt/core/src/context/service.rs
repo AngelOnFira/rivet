@@ -432,7 +432,7 @@ impl ServiceContextData {
 						.next()
 						.cloned()
 				});
-			// TOOD: Use the path to find the service instead of the name. This is difficult with multiple roots.
+			// TODO: Use the path to find the service instead of the name. This is difficult with multiple roots.
 			// .filter_map(|path| {
 			// 	let absolute_path = svc_path.join(path);
 			// 	all_svcs
@@ -825,8 +825,11 @@ impl ServiceContextData {
 		}
 
 		// Add billing flag
-		if project_ctx.config().billing_enabled {
-			env.push(("IS_BILLING_ENABLED".to_owned(), "1".into()));
+		if let Some(billing) = &project_ctx.ns().rivet.billing {
+			env.push((
+				"RIVET_BILLING".to_owned(),
+				serde_json::to_string(&billing).unwrap(),
+			));
 		}
 
 		if project_ctx.ns().dns.is_some() {
@@ -889,16 +892,6 @@ impl ServiceContextData {
 			"CRDB_MIN_CONNECTIONS".into(),
 			self.config().cockroachdb.min_connections.to_string(),
 		));
-
-		if self.depends_on_clickhouse() {
-			let clickhouse_data = terraform::output::read_clickhouse(&project_ctx).await;
-			let clickhouse_host = format!(
-				"https://{}:{}",
-				*clickhouse_data.host, *clickhouse_data.port_https
-			);
-
-			env.push(("CLICKHOUSE_URL".into(), clickhouse_host));
-		}
 
 		if self.depends_on_prometheus_api() {
 			env.push((
@@ -1154,6 +1147,21 @@ impl ServiceContextData {
 				format!("REDIS_URL_{}", db_name.to_uppercase().replace("-", "_")),
 				url,
 			));
+		}
+
+		// ClickHouse
+		if self.depends_on_clickhouse() {
+			let clickhouse_data = terraform::output::read_clickhouse(&project_ctx).await;
+			let username = "chirp";
+			let password = project_ctx
+				.read_secret(&["clickhouse", "users", username, "password"])
+				.await?;
+			let uri = format!(
+				"https://{}:{}@{}:{}",
+				username, password, *clickhouse_data.host, *clickhouse_data.port_https
+			);
+
+			env.push(("CLICKHOUSE_URL".into(), uri));
 		}
 
 		// Expose S3 endpoints to services that need them

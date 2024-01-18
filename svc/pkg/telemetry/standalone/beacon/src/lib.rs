@@ -42,7 +42,7 @@ pub async fn run_from_env(ts: i64) -> GlobalResult<()> {
 		[ctx, (Uuid,)]
 		"
 		SELECT team_id
-		FROM db_team_dev.dev_teams
+		FROM db_team.teams
 		",
 	)
 	.await?
@@ -352,7 +352,7 @@ pub async fn run_from_env(ts: i64) -> GlobalResult<()> {
 		let chunk = if chunk_size < events.len() {
 			events.split_off(events.len() - chunk_size)
 		} else {
-			events.drain(..).collect::<Vec<_>>()
+			std::mem::take(&mut events)
 		};
 		tracing::info!(remaining_len = ?events.len(), chunk_len = ?chunk.len(), "sending events");
 		client.capture_batch(chunk).await?;

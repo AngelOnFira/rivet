@@ -1,6 +1,5 @@
 use chirp_worker::prelude::*;
 use proto::backend::{self, pkg::*};
-use serde_json::json;
 
 #[derive(thiserror::Error, Debug)]
 enum Error {
@@ -12,7 +11,7 @@ enum Error {
 async fn worker(
 	ctx: &OperationContext<user_presence::msg::status_set::Message>,
 ) -> GlobalResult<()> {
-	let crdb = ctx.crdb().await?;
+	let _crdb = ctx.crdb().await?;
 
 	let user_id = unwrap_ref!(ctx.user_id).as_uuid();
 
@@ -54,21 +53,6 @@ async fn worker(
 		})
 		.await?;
 	}
-
-	msg!([ctx] analytics::msg::event_create() {
-		events: vec![
-			analytics::msg::event_create::Event {
-				name: "user.status_set".into(),
-				properties_json: Some(serde_json::to_string(&json!({
-					"user_id": user_id,
-					"status": ctx.status,
-					"silent": ctx.silent,
-				}))?),
-				..Default::default()
-			}
-		],
-	})
-	.await?;
 
 	Ok(())
 }

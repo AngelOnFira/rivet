@@ -378,7 +378,7 @@ pub async fn create(
 		}
 	};
 
-	let dynamic_max_players = body.max_players.map(ApiTryInto::try_into).transpose()?;
+	let dynamic_max_players = body.max_players.map(ApiTryInto::api_try_into).transpose()?;
 
 	// Verify that lobby creation is enabled and user can create a lobby
 	util_mm::verification::verify_config(
@@ -398,16 +398,14 @@ pub async fn create(
 			lobby_config_json: body
 				.lobby_config
 				.as_ref()
-				.map(|o| o.as_ref().map(serde_json::to_string))
-				.flatten()
+				.and_then(|o| o.as_ref().map(serde_json::to_string))
 				.transpose()?
 				.as_deref(),
 
 			verification_data_json: body
 				.verification_data
 				.as_ref()
-				.map(|o| o.as_ref().map(serde_json::to_string))
-				.flatten()
+				.and_then(|o| o.as_ref().map(serde_json::to_string))
 				.transpose()?
 				.as_deref(),
 			custom_lobby_publicity: Some(publicity),
@@ -581,10 +579,10 @@ pub async fn list(
 				region_id: region.name_id.clone(),
 				game_mode_id: lobby_group.name_id.clone(),
 				lobby_id: unwrap_ref!(lobby.lobby.lobby_id).as_uuid(),
-				max_players_normal: ApiTryInto::try_into(lobby.lobby.max_players_normal)?,
-				max_players_direct: ApiTryInto::try_into(lobby.lobby.max_players_direct)?,
-				max_players_party: ApiTryInto::try_into(lobby.lobby.max_players_party)?,
-				total_player_count: ApiTryInto::try_into(
+				max_players_normal: ApiTryInto::api_try_into(lobby.lobby.max_players_normal)?,
+				max_players_direct: ApiTryInto::api_try_into(lobby.lobby.max_players_direct)?,
+				max_players_party: ApiTryInto::api_try_into(lobby.lobby.max_players_party)?,
+				total_player_count: ApiTryInto::api_try_into(
 					lobby.player_count.registered_player_count,
 				)?,
 				state: lobby.state.map(Some),
@@ -750,7 +748,7 @@ async fn fetch_lobby_list(
 			.iter()
 			.filter(|x| {
 				matches!(
-					backend::matchmaker::lobby::Publicity::from_i32(x.publicity as i32),
+					backend::matchmaker::lobby::Publicity::from_i32(x.publicity),
 					Some(backend::matchmaker::lobby::Publicity::Public)
 				)
 			})
@@ -839,7 +837,7 @@ pub async fn get_state(
 		return Ok(Some(json!({})));
 	}
 
-	let lobby_ent = ctx.auth().lobby()?;
+	let _lobby_ent = ctx.auth().lobby()?;
 
 	let lobbies_res = op!([ctx] mm_lobby_state_get {
 		lobby_ids: vec![lobby_id.into()],
@@ -850,7 +848,7 @@ pub async fn get_state(
 	let state = lobby
 		.state_json
 		.as_ref()
-		.map(|state_json| serde_json::from_str::<serde_json::Value>(&state_json))
+		.map(|state_json| serde_json::from_str::<serde_json::Value>(state_json))
 		.transpose()?;
 
 	Ok(state)
@@ -914,7 +912,7 @@ async fn find_inner(
 				remote_address: unwrap_ref!(ctx.remote_address()).to_string(),
 				origin_host: origin_host,
 				captcha_config: Some(captcha_config.clone()),
-				client_response: Some((*captcha).try_into()?),
+				client_response: Some((*captcha).api_try_into()?),
 				namespace_id: Some(game_ns.namespace_id.into()),
 			})
 			.await?;
@@ -1023,17 +1021,17 @@ async fn find_inner(
 		bypass_verification: matches!(verification, VerificationType::Bypass),
 		tags: tags.clone(),
 		dynamic_max_players: dynamic_max_players
-			.map(ApiTryInto::try_into)
+			.map(ApiTryInto::api_try_into)
 			.transpose()?,
 		debug: None,
 	})
 	.await?;
 	let lobby_id = match find_res
-		.map_err(|msg| mm::msg::lobby_find_fail::ErrorCode::from_i32(msg.error_code))
+		.map_err(|msg| backend::matchmaker::lobby_find::ErrorCode::from_i32(msg.error_code))
 	{
 		Ok(res) => unwrap_ref!(res.lobby_id).as_uuid(),
 		Err(Some(code)) => {
-			use mm::msg::lobby_find_fail::ErrorCode::*;
+			use backend::matchmaker::lobby_find::ErrorCode::*;
 
 			match code {
 				Unknown => bail!("unknown find error code"),
@@ -1048,7 +1046,7 @@ async fn find_inner(
 				LobbyCountOverMax => bail_with!(MATCHMAKER_TOO_MANY_LOBBIES),
 				RegionNotEnabled => bail_with!(MATCHMAKER_REGION_NOT_ENABLED_FOR_GAME_MODE),
 
-				DevTeamInvalidStatus => bail_with!(GROUP_INVALID_DEVELOPER_STATUS),
+				DevTeamInvalidStatus => bail_with!(GROUP_DEACTIVATED),
 
 				FindDisabled => bail_with!(MATCHMAKER_FIND_DISABLED),
 				JoinDisabled => bail_with!(MATCHMAKER_JOIN_DISABLED),
@@ -1264,14 +1262,14 @@ async fn dev_mock_lobby(
 						.target_port
 						.map(|port| format!("{}:{port}", ns_dev_ent.hostname)),
 					hostname: ns_dev_ent.hostname.clone(),
-					port: port.target_port.map(|x| x.try_into()).transpose()?,
+					port: port.target_port.map(|x| x.api_try_into()).transpose()?,
 					port_range: port
 						.port_range
 						.as_ref()
 						.map(|x| {
 							GlobalResult::Ok(models::MatchmakerJoinPortRange {
-								min: x.min.try_into()?,
-								max: x.max.try_into()?,
+								min: x.min.api_try_into()?,
+								max: x.max.api_try_into()?,
 							})
 						})
 						.transpose()?
@@ -1294,8 +1292,8 @@ async fn dev_mock_lobby(
 		lobby: Box::new(models::MatchmakerJoinLobby {
 			lobby_id: Uuid::nil(),
 			region: Box::new(models::MatchmakerJoinRegion {
-				region_id: "dev-lcl".into(),
-				display_name: "Local".into(),
+				region_id: util_mm::consts::DEV_REGION_ID.into(),
+				display_name: util_mm::consts::DEV_REGION_NAME.into(),
 			}),
 			ports: ports.clone(),
 			player: player.clone(),
@@ -1429,7 +1427,7 @@ fn build_port(
 					GlobalResult::Ok(models::MatchmakerJoinPort {
 						host: Some(format!("{}:{}", hostname, proxied_port.ingress_port)),
 						hostname: hostname.clone(),
-						port: Some(proxied_port.ingress_port.try_into()?),
+						port: Some(proxied_port.ingress_port.api_try_into()?),
 						port_range: None,
 						is_tls: matches!(
 							mm_proxy_protocol,
@@ -1454,8 +1452,8 @@ fn build_port(
 				hostname: node_public_ipv4.clone(),
 				port: None,
 				port_range: Some(Box::new(models::MatchmakerJoinPortRange {
-					min: port_range.min.try_into()?,
-					max: port_range.max.try_into()?,
+					min: port_range.min.api_try_into()?,
+					max: port_range.max.api_try_into()?,
 				})),
 				is_tls: false,
 			})

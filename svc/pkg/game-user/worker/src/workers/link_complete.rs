@@ -6,7 +6,7 @@ use serde_json::json;
 async fn worker(
 	ctx: &OperationContext<game_user::msg::link_complete::Message>,
 ) -> GlobalResult<()> {
-	let crdb = ctx.crdb().await?;
+	let _crdb = ctx.crdb().await?;
 
 	let user_id = unwrap_ref!(ctx.user_id).as_uuid();
 	let link_id = unwrap_ref!(ctx.link_id).as_uuid();
@@ -122,21 +122,6 @@ async fn worker(
 			})
 			.await?;
 
-			msg!([ctx] analytics::msg::event_create() {
-				events: vec![
-					analytics::msg::event_create::Event {
-						name: "game_user_link.complete".into(),
-						user_id: Some(user_id.into()),
-						namespace_id: Some(namespace_id.into()),
-						properties_json: Some(serde_json::to_string(&json!({
-							"link_id": link_id,
-						}))?),
-						..Default::default()
-					}
-				],
-			})
-			.await?;
-
 			Some(game_user_token.token)
 		}
 		game_user::msg::link_complete::GameUserLinkCompleteResolution::Cancel => {
@@ -163,6 +148,7 @@ async fn worker(
 			msg!([ctx] analytics::msg::event_create() {
 				events: vec![
 					analytics::msg::event_create::Event {
+						event_id: Some(Uuid::new_v4().into()),
 						name: "game_user_link.cancel".into(),
 						user_id: Some(user_id.into()),
 						namespace_id: Some(namespace_id.into()),

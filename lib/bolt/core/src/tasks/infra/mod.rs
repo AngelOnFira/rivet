@@ -266,6 +266,17 @@ pub fn build_plan(
 		}
 	}
 
+	// BetterUptime
+	if ctx.ns().better_uptime.is_some() {
+		plan.push(PlanStep {
+			name_id: "better_uptime",
+			kind: PlanStepKind::Terraform {
+				plan_id: "better_uptime".into(),
+				needs_destroy: true,
+			},
+		});
+	}
+
 	// S3
 	let s3_providers = &ctx.ns().s3.providers;
 	if s3_providers.minio.is_some() {
@@ -295,6 +306,14 @@ pub fn build_plan(
 			},
 		});
 	}
+
+	plan.push(PlanStep {
+		name_id: "infra-artifacts",
+		kind: PlanStepKind::Terraform {
+			plan_id: "infra_artifacts".into(),
+			needs_destroy: false,
+		},
+	});
 
 	plan.push(PlanStep {
 		name_id: "migrate",

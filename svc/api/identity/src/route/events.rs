@@ -9,7 +9,7 @@ use proto::{
 use rivet_api::models;
 use rivet_convert::{fetch, ApiTryInto};
 use rivet_operation::prelude::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::{auth::Auth, utils};
 
@@ -31,10 +31,10 @@ pub async fn events(
 	// Wait for an update if needed
 	let EventsWaitResponse {
 		new_mm_lobby_joins,
-		removed_team_ids,
+		removed_team_ids: _,
 		user_update_ts,
 		last_update_ts,
-		valid_anchor,
+		valid_anchor: _,
 	} = if let Some(anchor) = &watch_index.to_consumer()? {
 		events_wait(&ctx, anchor, current_user_id).await?
 	} else {
@@ -409,8 +409,8 @@ fn build_port(
 				hostname: node_public_ipv4.clone(),
 				port: None,
 				port_range: Some(Box::new(models::MatchmakerJoinPortRange {
-					min: port_range.min.try_into()?,
-					max: port_range.max.try_into()?,
+					min: port_range.min.api_try_into()?,
+					max: port_range.max.api_try_into()?,
 				})),
 				is_tls: false,
 			})

@@ -6,7 +6,7 @@ use serde_json::json;
 async fn handle(
 	ctx: OperationContext<captcha::verify::Request>,
 ) -> GlobalResult<captcha::verify::Response> {
-	let crdb = ctx.crdb().await?;
+	let _crdb = ctx.crdb().await?;
 
 	let captcha_config = unwrap_ref!(ctx.captcha_config);
 	let client_response = unwrap_ref!(ctx.client_response);
@@ -121,6 +121,7 @@ async fn handle(
 	msg!([ctx] analytics::msg::event_create() {
 		events: vec![
 			analytics::msg::event_create::Event {
+				event_id: Some(Uuid::new_v4().into()),
 				name: if success { "captcha.success" } else { "captcha.fail" }.into(),
 				properties_json: Some(serde_json::to_string(&json!({
 					"user_id": user_id,

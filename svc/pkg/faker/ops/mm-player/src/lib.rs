@@ -63,10 +63,12 @@ async fn handle(
 	.await?;
 
 	// Check error code
-	match find_res.map_err(|msg| mm::msg::lobby_find_fail::ErrorCode::from_i32(msg.error_code)) {
+	match find_res
+		.map_err(|msg| backend::matchmaker::lobby_find::ErrorCode::from_i32(msg.error_code))
+	{
 		Ok(_) => {}
 		Err(Some(code)) => {
-			use mm::msg::lobby_find_fail::ErrorCode::*;
+			use backend::matchmaker::lobby_find::ErrorCode::*;
 
 			match code {
 				Unknown => bail!("unknown find error code"),
@@ -81,7 +83,7 @@ async fn handle(
 				LobbyCountOverMax => bail_with!(MATCHMAKER_TOO_MANY_LOBBIES),
 				RegionNotEnabled => bail_with!(MATCHMAKER_REGION_NOT_ENABLED_FOR_GAME_MODE),
 
-				DevTeamInvalidStatus => bail_with!(GROUP_INVALID_DEVELOPER_STATUS),
+				DevTeamInvalidStatus => bail_with!(GROUP_DEACTIVATED),
 
 				FindDisabled => bail_with!(MATCHMAKER_FIND_DISABLED),
 				JoinDisabled => bail_with!(MATCHMAKER_JOIN_DISABLED),

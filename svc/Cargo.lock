@@ -57,24 +57,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0942ffc6dcaadf03badf6e6a2d0228460359d5e34b57ccdc720b7382dfbd5ec5"
 
 [[package]]
-name = "analytics-worker"
-version = "0.0.1"
-dependencies = [
- "chirp-client",
- "chirp-worker",
- "clickhouse",
- "faker-game",
- "faker-user",
- "lazy_static",
- "prost 0.10.4",
- "rivet-health-checks",
- "rivet-metrics",
- "rivet-runtime",
- "serde",
- "user-presence-get",
-]
-
-[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -252,6 +234,7 @@ dependencies = [
  "game-banner-upload-complete",
  "game-create",
  "game-get",
+ "game-list-for-team",
  "game-logo-upload-complete",
  "game-namespace-create",
  "game-namespace-get",
@@ -302,8 +285,6 @@ dependencies = [
  "s3-util",
  "serde",
  "serde_json",
- "team-dev-game-list",
- "team-dev-get",
  "team-get",
  "team-member-count",
  "team-validate",
@@ -357,7 +338,6 @@ dependencies = [
  "serde",
  "serde_json",
  "team-avatar-upload-complete",
- "team-dev-get",
  "team-get",
  "team-invite-get",
  "team-join-request-list",
@@ -782,7 +762,6 @@ dependencies = [
  "rivet-portal-server",
  "serde",
  "serde_json",
- "team-dev-get",
  "team-get",
  "team-member-count",
  "thiserror",
@@ -1923,6 +1902,7 @@ dependencies = [
  "chirp-worker",
  "faker-game",
  "game-get",
+ "game-list-for-team",
  "game-namespace-list",
  "game-resolve-namespace-id",
  "reqwest",
@@ -1930,7 +1910,6 @@ dependencies = [
  "rivet-metrics",
  "rivet-runtime",
  "serde",
- "team-dev-game-list",
 ]
 
 [[package]]
@@ -2290,6 +2269,7 @@ version = "0.0.1"
 dependencies = [
  "chirp-client",
  "chirp-worker",
+ "chrono",
  "cloud-game-token-create",
  "rivet-health-checks",
  "rivet-metrics",
@@ -2989,7 +2969,6 @@ dependencies = [
  "faker-user",
  "prost 0.10.4",
  "rivet-operation",
- "team-dev-get",
  "team-get",
 ]
 
@@ -3095,9 +3074,9 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 
 [[package]]
 name = "form_urlencoded"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a62bc1cf6f830c2ec14a513a9fb124d0a213a629668a4186f329db21fe045652"
+checksum = "e13624c2627564efccf4934284bdd98cbaa14e79b0b5a141218e507b3a823456"
 dependencies = [
  "percent-encoding",
 ]
@@ -3253,7 +3232,7 @@ dependencies = [
  "prost 0.10.4",
  "rivet-operation",
  "sqlx",
- "team-dev-get",
+ "team-get",
 ]
 
 [[package]]
@@ -3278,6 +3257,18 @@ dependencies = [
  "chirp-client",
  "chirp-worker",
  "prost 0.10.4",
+ "rivet-operation",
+ "sqlx",
+]
+
+[[package]]
+name = "game-list-for-team"
+version = "0.0.1"
+dependencies = [
+ "chirp-client",
+ "chirp-worker",
+ "faker-game",
+ "faker-team",
  "rivet-operation",
  "sqlx",
 ]
@@ -4093,9 +4084,9 @@ dependencies = [
 
 [[package]]
 name = "idna"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d20d6b07bfbc108882d88ed8e37d39636dcc260e15e30c45e6ba089610b917c"
+checksum = "634d9b1461af396cad843f47fdba5597a4f9e6ddd4bfb6ff5d85028c25cb12f6"
 dependencies = [
  "unicode-bidi",
  "unicode-normalization",
@@ -5118,7 +5109,7 @@ dependencies = [
  "s3-util",
  "serde",
  "sqlx",
- "team-dev-get",
+ "team-get",
  "tier-list",
  "token-create",
  "upload-complete",
@@ -5259,7 +5250,6 @@ dependencies = [
 name = "monolith-worker"
 version = "0.0.1"
 dependencies = [
- "analytics-worker",
  "cdn-worker",
  "cf-custom-hostname-worker",
  "chirp-client",
@@ -5277,7 +5267,6 @@ dependencies = [
  "rivet-metrics",
  "rivet-operation",
  "rivet-runtime",
- "team-dev-worker",
  "team-invite-worker",
  "team-worker",
  "tokio",
@@ -5604,9 +5593,9 @@ dependencies = [
 
 [[package]]
 name = "percent-encoding"
-version = "2.3.0"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b2a4787296e9989611394c33f193f676704af1686e70b8f8033ab5ba9a35a94"
+checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 
 [[package]]
 name = "perf-log-get"
@@ -6384,7 +6373,6 @@ dependencies = [
  "rivet-util-mm",
  "serde",
  "serde_json",
- "team-dev-get",
  "team-get",
  "team-member-count",
  "team-profile-validate",
@@ -6570,6 +6558,7 @@ dependencies = [
  "tokio",
  "tokio-util 0.7.10",
  "tracing",
+ "url",
 ]
 
 [[package]]
@@ -6689,6 +6678,8 @@ name = "rivet-util-env"
 version = "0.1.0"
 dependencies = [
  "lazy_static",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -7002,9 +6993,9 @@ checksum = "836fa6a3e1e547f9a2c4040802ec865b5d85f4014efe00555d7090a3dcaa1090"
 
 [[package]]
 name = "serde"
-version = "1.0.190"
+version = "1.0.193"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91d3c334ca1ee894a2c6f6ad698fe8c435b76d504b13d436f0685d648d6d96f7"
+checksum = "25dd9975e68d0cb5aa1120c288333fc98731bd1dd12f561e468ea4728c042b89"
 dependencies = [
  "serde_derive",
 ]
@@ -7020,9 +7011,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.190"
+version = "1.0.193"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67c5609f394e5c2bd7fc51efda478004ea80ef42fee983d5c67a65e34f32c0e3"
+checksum = "43576ca501357b9b071ac53cdc7da8ef0cbd9493d8df094cd821777ea6e894d3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7042,9 +7033,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.107"
+version = "1.0.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b420ce6e3d8bd882e9b243c6eed35dbc9a6110c9769e74b584e0d68d1f20c65"
+checksum = "cb0652c533506ad7a2e353cce269330d6afd8bdfb6d75e0ace5b35aacbd7b9e9"
 dependencies = [
  "itoa 1.0.9",
  "ryu",
@@ -7618,128 +7609,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "team-billing-aggregate"
-version = "0.0.1"
-dependencies = [
- "chirp-client",
- "chirp-worker",
- "faker-game",
- "faker-mm-lobby-row",
- "faker-region",
- "game-get",
- "game-namespace-list",
- "game-resolve-namespace-id",
- "mm-config-version-get",
- "mm-lobby-runtime-aggregate",
- "prost 0.10.4",
- "region-list",
- "rivet-operation",
- "team-dev-game-list",
-]
-
-[[package]]
-name = "team-billing-collect"
-version = "0.0.1"
-dependencies = [
- "chirp-client",
- "chirp-worker",
- "chrono",
- "faker-mm-lobby",
- "faker-team",
- "futures-util",
- "game-get",
- "indoc",
- "prost 0.10.4",
- "rivet-connection",
- "rivet-operation",
- "rivet-pools",
- "rivet-runtime",
- "sqlx",
- "team-billing-aggregate",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "team-dev-game-list"
-version = "0.0.1"
-dependencies = [
- "chirp-client",
- "chirp-worker",
- "faker-game",
- "faker-team",
- "prost 0.10.4",
- "rivet-operation",
- "sqlx",
-]
-
-[[package]]
-name = "team-dev-get"
-version = "0.0.1"
-dependencies = [
- "chirp-client",
- "chirp-worker",
- "faker-team",
- "prost 0.10.4",
- "rivet-operation",
- "sqlx",
-]
-
-[[package]]
-name = "team-dev-halt"
-version = "0.0.1"
-dependencies = [
- "chirp-client",
- "chirp-worker",
- "game-namespace-list",
- "mm-lobby-list-for-namespace",
- "prost 0.10.4",
- "rivet-operation",
- "sqlx",
-]
-
-[[package]]
-name = "team-dev-halt-collect"
-version = "0.0.1"
-dependencies = [
- "chirp-client",
- "chirp-worker",
- "chrono",
- "futures-util",
- "indoc",
- "prost 0.10.4",
- "rivet-connection",
- "rivet-metrics",
- "rivet-operation",
- "rivet-pools",
- "rivet-runtime",
- "sqlx",
- "team-dev-halt",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "team-dev-worker"
-version = "0.0.1"
-dependencies = [
- "chirp-client",
- "chirp-worker",
- "chrono",
- "faker-team",
- "rivet-health-checks",
- "rivet-metrics",
- "rivet-runtime",
- "serde",
- "team-dev-get",
- "team-dev-halt",
- "team-get",
- "user-identity-get",
-]
-
-[[package]]
 name = "team-get"
 version = "0.0.1"
 dependencies = [
@@ -7923,12 +7792,13 @@ dependencies = [
  "chirp-client",
  "chirp-worker",
  "faker-team",
+ "game-namespace-list",
+ "mm-lobby-list-for-namespace",
  "reqwest",
  "rivet-health-checks",
  "rivet-metrics",
  "rivet-runtime",
  "serde",
- "team-dev-get",
  "team-join-request-list",
  "team-profile-validate",
  "team-user-ban-get",
@@ -8647,9 +8517,9 @@ dependencies = [
 
 [[package]]
 name = "url"
-version = "2.4.1"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "143b538f18257fac9cad154828a57c6bf5157e1aa604d4816b5995bf6de87ae5"
+checksum = "31e6302e3bb753d46e83516cae55ae196fc0c309407cf11ab35cc51a4c2a4633"
 dependencies = [
  "form_urlencoded",
  "idna",
@@ -9414,18 +9284,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.7.18"
+version = "0.7.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ede7d7c7970ca2215b8c1ccf4d4f354c4733201dfaaba72d44ae5b37472e4901"
+checksum = "1c4061bedbb353041c12f413700357bec76df2c7e2ca8e4df8bac24c6bf68e3d"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.7.18"
+version = "0.7.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b27b1bb92570f989aac0ab7e9cbfbacdd65973f7ee920d9f0e71ebac878fd0b"
+checksum = "b3c129550b3e6de3fd0ba67ba5c81818f9805e58b8d7fee80a3a59d2c9fc601a"
 dependencies = [
  "proc-macro2",
  "quote",
