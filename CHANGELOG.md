@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.0.0 (2024-02-21)
+
+
+### Features
+
+* add release please action ([eb55476](https://github.com/AngelOnFira/rivet/commit/eb5547656ad401a4e8680b87053404a2f787b8ff))
+
+
+### Bug Fixes
+
+* **added:** add goo to flux capacitor ([ba2ffbd](https://github.com/AngelOnFira/rivet/commit/ba2ffbdb3e61f74ee8368efd98d6854481cd3a93))
+* **fixed:** mega rust panic biggo fixed ([e3efe8c](https://github.com/AngelOnFira/rivet/commit/e3efe8c41dff7084efc2710ce57735dd25e18a72))
+* **fixed:** mega rust panic biggo fixed ([82d430d](https://github.com/AngelOnFira/rivet/commit/82d430d906926ab564e821858c78b9015a3ebd8a))
+
+
+### Miscellaneous Chores
+
+* release 2.0.0 ([8203d11](https://github.com/AngelOnFira/rivet/commit/8203d11fa0d08e5fa2178990cc30c60f2535c32d))
+
 ## [24.1.1] - Unreleased
 
 ### Added
