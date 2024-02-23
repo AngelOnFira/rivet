@@ -199,7 +199,6 @@ pub async fn check_config_sync(ctx: &ProjectContext) {
 		ctx.config_local()._1password.as_ref(),
 		ctx.ns().secrets._1password.as_ref(),
 	) else {
-		eprintln!();
 		rivet_term::status::warn(
 			"Warning",
 			format!(
