@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Calendar Versioning](https://calver.org/).
 
+## 24.1.1 (2024-02-23)
+
+
+### Features
+
+* **Main:** Added Devcontainer files ([9bb97db](https://github.com/AngelOnFira/rivet/commit/9bb97db1e3b211830eada237eca3b6fa210ba7b8))
+* **Main:** Do an update ([2a15d47](https://github.com/AngelOnFira/rivet/commit/2a15d478efd63dcd362086e59eae62431e5061b6))
+
+
+### Miscellaneous Chores
+
+* release 24.1.1 ([fc46937](https://github.com/AngelOnFira/rivet/commit/fc46937c475c4cef2959d63f309381739653a110))
+
 ## [24.2.0] - 2024-02-22
 
 ### Added
